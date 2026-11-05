@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EarnHub Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef4f0;--ink:#0d2b21;--mut:#4b6258;--card:#fff;--line:#cfdcd4;--brand:#0f5c43;--brand-ink:#fff;--gold:#f4b52b;--gold-ink:#2a1d00;--bad:#c0392b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1a14;--ink:#e8f3ec;--mut:#9bb3a6;--card:#112a20;--line:#24412f;--brand:#3fbf8f;--brand-ink:#04150e;--bad:#ff8a7a}}
+:root[data-theme="dark"]{--bg:#0a1a14;--ink:#e8f3ec;--mut:#9bb3a6;--card:#112a20;--line:#24412f;--brand:#3fbf8f;--brand-ink:#04150e;--bad:#ff8a7a}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'DM Sans',system-ui,sans-serif}
+h1,h2,h3{font-family:'Bricolage Grotesque','DM Sans',system-ui,sans-serif;line-height:1.1;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px 60px}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 0;gap:10px;flex-wrap:wrap}
+.logo{font:800 22px 'Bricolage Grotesque',sans-serif;display:flex;gap:8px;align-items:center}
+.logo i{width:26px;height:26px;border-radius:8px;background:var(--gold);display:inline-block}
+.badge{background:var(--gold);color:var(--gold-ink);font-weight:700;font-size:12px;border-radius:99px;padding:4px 11px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}
+.kpi small{color:var(--mut);display:block}.kpi b{font:800 26px 'Bricolage Grotesque',sans-serif;color:var(--brand)}
+.kpi em{font-style:normal;font-size:12px;color:var(--mut)}
+nav{display:flex;gap:6px;overflow-x:auto;margin:16px 0;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+nav button{flex:1 0 auto;border:0;background:transparent;color:var(--mut);font:700 14px 'DM Sans',sans-serif;padding:10px 14px;border-radius:10px;cursor:pointer;white-space:nowrap}
+nav button[aria-selected=true]{background:var(--brand);color:var(--brand-ink)}
+nav .n{background:var(--gold);color:var(--gold-ink);border-radius:99px;font-size:11px;padding:1px 7px;margin-left:5px}
+.btn{font:700 13px 'DM Sans',sans-serif;border-radius:9px;padding:7px 12px;border:2px solid transparent;cursor:pointer;background:var(--brand);color:var(--brand-ink)}
+.btn.gold{background:var(--gold);color:var(--gold-ink)}.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}.btn.bad{background:var(--bad);color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.g2{display:grid;grid-template-columns:1.6fr 1fr;gap:14px}@media(max-width:820px){.g2{grid-template-columns:1fr}}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+input,select{padding:9px 11px;border-radius:9px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:14px 'DM Sans',sans-serif}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--mut);font-weight:700}
+.pill{font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid var(--line);color:var(--mut)}
+.pill.ok{color:var(--brand);border-color:var(--brand)}.pill.no{color:var(--bad);border-color:var(--bad)}.pill.wa{color:var(--gold-ink);background:var(--gold);border-color:var(--gold)}
+.sub{color:var(--mut);margin:4px 0 14px}.bar{height:9px;background:var(--bg);border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:4px 0 12px}.bar i{display:block;height:100%;background:var(--brand)}
+.shot{width:46px;height:30px;border-radius:5px;background:linear-gradient(135deg,var(--brand),var(--gold));display:inline-block;vertical-align:middle}
+.act{display:flex;gap:6px}.neg{color:var(--bad)}
+[hidden]{display:none!important}
+svg text{fill:var(--mut);font:11px 'DM Sans',sans-serif}
+
+/* Login Screen Styles */
+#login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; }
+#login-screen .card { width: 100%; max-width: 400px; padding: 30px; }
+#login-screen input { width: 100%; margin-bottom: 12px; padding: 12px; }
+#login-screen .btn { width: 100%; padding: 12px; font-size: 16px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="wrap" id="login-screen">
+  <div class="logo" style="margin-bottom: 20px;"><i></i>EarnHub Admin</div>
+  <div class="card">
+    <h3>Admin Login</h3>
+    <p class="sub">Log in to manage EarnHub.</p>
+    <p class="err" id="login-err" style="color:var(--bad); font-size:13px; min-height:18px;"></p>
+    <input type="email" id="login-email" placeholder="Admin Email">
+    <input type="password" id="login-pw" placeholder="Password">
+    <button class="btn gold" id="login-btn">Log In</button>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD (Hidden by default) -->
+<div class="wrap" id="admin-dashboard" hidden>
+  <header><div class="logo"><i></i>EarnHub <span class="badge">Admin</span></div><div class="row"><small style="color:var(--mut)" id="now"></small><button class="btn ghost" id="reset">Refresh data</button></div></header>
+  <div class="kpis" id="kpis"></div>
+  <nav id="nav" role="tablist"></nav>
+  <main id="main"></main>
+  <p class="sub" style="margin-top:28px;font-size:13px">Connected to Supabase.</p>
+</div>
+
+<!-- LOGIC -->
+<script type="module">
+import { supabase } from './js/supabase.js'
+import { signIn, signOut } from './js/auth.js'
+
+const $ = id => document.getElementById(id)
+
+// 1. Handle Login
+$('login-btn').onclick = async () => {
+  const email = $('login-email').value.trim()
+  const pw = $('login-pw').value
+  const errEl = $('login-err')
+  errEl.textContent = ''
+  
+  if (!email || !pw) return errEl.textContent = 'Enter email and password.'
+  
+  try {
+    $('login-btn').textContent = 'Checking...'
+    
+    // Log them in
+    const { user } = await signIn({ email, password: pw })
+    
+    // Check if they are actually an admin
+    const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+    
+    if (!profile || !profile.is_admin) {
+      await signOut()
+      throw new Error('Access denied. You are not an admin.')
+    }
+    
+    // If they are admin, show the dashboard and run the admin script
+    $('login-screen').hidden = true
+    $('admin-dashboard').hidden = false
+    initAdmin()
+    
+  } catch (err) {
+    errEl.textContent = err.message
+    $('login-btn').textContent = 'Log In'
+  }
+}
+
+// 2. Load the admin script dynamically ONLY after login
+async function initAdmin() {
+  try {
+    const module = await import('./js/admin.js')
+    if (module.init) module.init()
+  } catch (err) {
+    console.error('Failed to load admin.js', err)
+    alert('Error loading dashboard. Check console.')
+  }
+}
+
+// 3. Check if they are already logged in when they refresh the page
+supabase.auth.getSession().then(async ({ data: { session } }) => {
+  if (session) {
+    const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single()
+    if (profile && profile.is_admin) {
+      $('login-screen').hidden = true
+      $('admin-dashboard').hidden = false
+      initAdmin()
+    }
+  }
+})
+
+</script>
+</body></html>

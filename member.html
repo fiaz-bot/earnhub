@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EarnHub Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef4f0;--ink:#0d2b21;--mut:#4b6258;--card:#fff;--line:#cfdcd4;--brand:#0f5c43;--brand-ink:#fff;--gold:#f4b52b;--gold-ink:#2a1d00;--bad:#c0392b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1a14;--ink:#e8f3ec;--mut:#9bb3a6;--card:#112a20;--line:#24412f;--brand:#3fbf8f;--brand-ink:#04150e;--bad:#ff8a7a}}
+:root[data-theme="dark"]{--bg:#0a1a14;--ink:#e8f3ec;--mut:#9bb3a6;--card:#112a20;--line:#24412f;--brand:#3fbf8f;--brand-ink:#04150e;--bad:#ff8a7a}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'DM Sans',system-ui,sans-serif}
+h1,h2,h3{font-family:'Bricolage Grotesque','DM Sans',system-ui,sans-serif;line-height:1.1;margin:0}
+.wrap{max-width:1000px;margin:0 auto;padding:0 16px 60px}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 0;gap:10px;flex-wrap:wrap}
+.logo{font:800 22px 'Bricolage Grotesque',sans-serif;display:flex;gap:8px;align-items:center}
+.logo i{width:26px;height:26px;border-radius:8px;background:var(--gold);display:inline-block}
+.badge{background:var(--gold);color:var(--gold-ink);font-weight:700;font-size:12px;border-radius:99px;padding:3px 10px;text-transform:capitalize}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.kpi small{color:var(--mut);display:block}.kpi b{font:800 24px 'Bricolage Grotesque',sans-serif;color:var(--brand)}
+nav{display:flex;gap:6px;overflow-x:auto;margin:6px 0 14px;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+nav button{flex:1 0 auto;border:0;background:transparent;color:var(--mut);font:700 14px 'DM Sans',sans-serif;padding:10px 14px;border-radius:10px;cursor:pointer;white-space:nowrap}
+nav button[aria-selected=true]{background:var(--brand);color:var(--brand-ink)}
+.btn{font:700 14px 'DM Sans',sans-serif;border-radius:10px;padding:9px 14px;border:2px solid transparent;cursor:pointer;background:var(--brand);color:var(--brand-ink)}
+.btn.gold{background:var(--gold);color:var(--gold-ink)}.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}.row small,.sub{color:var(--mut)}.sub{margin:4px 0 12px}
+input,select{padding:10px 11px;border-radius:9px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:15px 'DM Sans',sans-serif;max-width:100%}
+.pill{font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid var(--line);color:var(--mut)}
+.pill.ok{color:var(--brand);border-color:var(--brand)}.pill.wa{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.plan{border:2px solid var(--line);border-radius:14px;padding:14px}.plan.on{border-color:var(--brand)}.plan b{font:800 22px 'Bricolage Grotesque',sans-serif}
+.thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--bg)}
+.form{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;z-index:9}
+[hidden]{display:none!important}
+</style></head>
+<body><div class="wrap">
+<header><div class="logo"><i></i>EarnHub <span class="badge" id="pb"></span></div><small class="sub" style="margin:0" id="live" hidden>● Live</small></header>
+<div class="kpis" id="kpis"></div>
+<div id="ban"></div>
+<nav id="nav" role="tablist"></nav>
+<main id="main"></main>
+</div><div class="toast" id="toast" hidden></div>
+
+<!-- THIS IS THE ONLY CHANGE: It loads the new Supabase logic -->
+<script type="module" src="js/member.js?v=2"></script>
+</body></html>

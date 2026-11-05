@@ -1,0 +1,24 @@
+earnhub/
+├── index.html                  ← welcome & sign-up page
+├── member.html                 ← member dashboard
+├── admin.html                  ← admin dashboard
+│
+├── css/
+│   └── style.css               ← (optional) shared styles if you extract them
+│
+├── js/
+│   ├── supabase.js             ← ONE file: creates + exports the Supabase client
+│   ├── auth.js                 ← sign-up / login / logout helpers
+│   ├── member.js               ← logic for member.html
+│   └── admin.js                ← logic for admin.html
+│
+├── assets/
+│   └── images/                 ← screenshots, logos, etc.
+│
+├── supabase/
+│   ├── schema.sql              ← your table definitions (run once in Supabase)
+│   └── policies.sql            ← Row Level Security rules
+│
+├── .env                        ← secrets (SUPABASE_URL, SUPABASE_ANON_KEY) — NEVER commit
+├── .gitignore                  ← includes .env
+└── README.md                   ← setup instructions

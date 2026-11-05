@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Join and start earning</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Paste Claude's CSS from the old index.html here (It's too long to repeat, but keep all the <style> tags exactly the same!) */
+:root{--bg:#eef4f0;--ink:#0d2b21;--mut:#4b6258;--card:#fff;--line:#cfdcd4;--brand:#0f5c43;--brand-ink:#fff;--gold:#f4b52b;--gold-ink:#2a1d00;--ring:#25d366; box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1a14;--ink:#e8f3ec;--mut:#9bb3a6;--card:#112a20;--line:#24412f;--brand:#3fbf8f;--brand-ink:#04150e}}
+:root[data-theme="dark"]{--bg:#0a1a14;--ink:#e8f3ec;--mut:#9bb3a6;--card:#112a20;--line:#24412f;--brand:#3fbf8f;--brand-ink:#04150e}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 'DM Sans',system-ui,sans-serif}
+h1,h2,h3{font-family:'Bricolage Grotesque','DM Sans',system-ui,sans-serif;line-height:1.08;margin:0}
+a{color:var(--brand)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 0}
+.logo{font:800 22px 'Bricolage Grotesque',sans-serif;display:flex;gap:8px;align-items:center}
+.logo i{width:26px;height:26px;border-radius:8px;background:var(--gold);display:inline-block}
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:36px;align-items:start;padding:20px 0 40px}
+@media(max-width:860px){.hero{grid-template-columns:1fr}}
+h1{font-size:clamp(34px,5.4vw,58px);font-weight:800;letter-spacing:-.02em}
+.lead{font-size:19px;color:var(--mut);max-width:34em;margin:16px 0 24px}
+.btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn{font:700 16px 'DM Sans',sans-serif;border-radius:12px;padding:14px 22px;border:2px solid transparent;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+.btn:focus-visible,input:focus-visible,.tab:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.primary{background:var(--gold);color:var(--gold-ink)}
+.ghost{background:transparent;border-color:var(--ink);color:var(--ink)}
+.perks{display:flex;gap:22px;flex-wrap:wrap;margin-top:28px;padding-top:20px;border-top:1px solid var(--line);font-weight:700}
+.perks span:before{content:"✓ ";color:var(--brand)}
+.status{margin-top:32px}
+.status p{margin:0 0 12px;font-weight:700}
+.rings{display:flex;gap:16px;overflow-x:auto;padding-bottom:6px}
+.ring{flex:0 0 auto;text-align:center;width:84px;font-size:13px}
+.ring b{display:grid;place-items:center;width:68px;height:68px;margin:0 auto 6px;border-radius:50%;border:3px solid var(--ring);padding:3px}
+.ring b em{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:var(--brand);color:var(--brand-ink);font:800 20px 'Bricolage Grotesque',sans-serif;font-style:normal}
+.ring span{display:block;color:var(--mut)}
+.note{font-size:12px;color:var(--mut);margin-top:6px}
+.auth{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 12px 40px -18px rgba(5,40,28,.35)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:18px}
+.tab{border:0;background:transparent;color:var(--mut);font:700 15px 'DM Sans',sans-serif;padding:10px;border-radius:9px;cursor:pointer}
+.tab[aria-selected=true]{background:var(--brand);color:var(--brand-ink)}
+label{display:block;font-weight:700;font-size:14px;margin:12px 0 5px}
+input[type=text],input[type=email],input[type=tel],input[type=password]{width:100%;padding:13px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:16px 'DM Sans',sans-serif}
+.pw{position:relative}.pw button{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--brand);font-weight:700;cursor:pointer;padding:8px}
+.err{color:#c0392b;font-size:13px;min-height:18px;margin:4px 0 0}
+@media(prefers-color-scheme:dark){.err{color:#ff8a7a}}
+.terms{display:flex;gap:10px;align-items:flex-start;margin:14px 0 4px;font-size:14px}
+.terms input{width:20px;height:20px;margin-top:2px;accent-color:var(--brand);flex:0 0 auto}
+.terms label{margin:0;font-weight:400}
+.auth .btn{width:100%;margin-top:14px;background:var(--brand);color:var(--brand-ink)}
+.msg{display:none;margin-top:14px;padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--brand);font-size:14px}
+.small{font-size:14px;color:var(--mut);text-align:center;margin:12px 0 0}
+[hidden]{display:none!important}
+section{padding:34px 0;border-top:1px solid var(--line)}
+section h2{font-size:clamp(26px,4vw,38px);margin-bottom:8px}
+.sub{color:var(--mut);margin:0 0 20px;max-width:40em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.proof{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.proof strong{font:800 24px 'Bricolage Grotesque',sans-serif;color:var(--brand);display:block}
+.task{display:flex;justify-content:space-between;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.task h3{font-size:17px}.task small{color:var(--mut)}
+.pay{font:800 18px 'Bricolage Grotesque',sans-serif;color:var(--brand);white-space:nowrap}
+.video{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:18px;margin-top:16px}
+details summary{cursor:pointer;font-weight:700}
+footer{padding:28px 0 40px;color:var(--mut);font-size:14px;border-top:1px solid var(--line)}
+dialog{max-width:520px;width:calc(100% - 32px);border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);padding:24px}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+dialog h2{font-size:24px;margin-bottom:10px}dialog p{font-size:14px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="logo"><i></i>EarnHub</div><a href="#auth" class="btn ghost" style="padding:9px 16px">Log in</a></header>
+
+<main>
+<div class="hero">
+ <div>
+  <h1>Join thousands worldwide earning real money for completing tasks.</h1>
+  <p class="lead">Your skills. Your time. Your reward. Pick a task, finish it, and get paid.</p>
+  <div class="btns">
+   <a href="#auth" class="btn primary" data-signup>Start earning</a>
+   <a href="#how" class="btn ghost">Watch how it works</a>
+  </div>
+  <div class="perks"><span>Instant payouts</span><span>Verified tasks</span><span>Free to join</span></div>
+
+  <div class="status">
+   <p>Earned through advertising on WhatsApp Status</p>
+   <div class="rings" aria-label="Sample member earnings">
+    <div class="ring"><b><em>A</em></b>Amina<span>KSh 1,250</span></div>
+    <div class="ring"><b><em>B</em></b>Brian<span>KSh 2,400</span></div>
+    <div class="ring"><b><em>C</em></b>Cynthia<span>KSh 980</span></div>
+    <div class="ring"><b><em>D</em></b>David<span>KSh 3,100</span></div>
+    <div class="ring"><b><em>E</em></b>Esther<span>KSh 1,700</span></div>
+   </div>
+   <p class="note">Sample figures for illustration. Your earnings depend on the tasks you complete.</p>
+  </div>
+ </div>
+
+ <div class="auth" id="auth">
+  <div class="tabs" role="tablist">
+   <button class="tab" role="tab" id="t-up" aria-selected="true">Create account</button>
+   <button class="tab" role="tab" id="t-in" aria-selected="false">Log in</button>
+  </div>
+  <form id="form" novalidate>
+   <div id="signup-only">
+    <label for="name">Full name</label><input id="name" type="text" autocomplete="name" placeholder="Jane Wanjiru">
+    <label for="phone">Safaricom phone number</label><input id="phone" type="tel" autocomplete="tel" placeholder="e.g. 0712 345 678">
+   </div>
+   <label for="email">Email</label><input id="email" type="email" autocomplete="email" placeholder="you@example.com">
+   <label for="pw">Password</label>
+   <div class="pw"><input id="pw" type="password" autocomplete="new-password" placeholder="At least 8 characters"><button type="button" data-show="pw">Show</button></div>
+   <div id="confirm-wrap">
+    <label for="pw2">Confirm password</label>
+    <div class="pw"><input id="pw2" type="password" autocomplete="new-password" placeholder="Repeat your password"><button type="button" data-show="pw2">Show</button></div>
+   </div>
+   <div class="terms" id="terms-wrap">
+    <input type="checkbox" id="terms"><label for="terms">I agree to the <a href="#" id="open-terms">Terms and Conditions</a> and Privacy Policy.</label>
+   </div>
+   <p class="err" id="err" role="alert"></p>
+   <button class="btn" type="submit" id="submit">Create account</button>
+   <div class="msg" id="msg"></div>
+   <p class="small" id="forgot" hidden><a href="#">Forgot your password?</a></p>
+  </form>
+ </div>
+</div>
+
+<section id="started">
+ <h2>Get started: check today’s available tasks</h2>
+ <p class="sub">Create your account to unlock these and more. New tasks are added every day.</p>
+ <div id="tasks"></div>
+ <a href="#auth" class="btn primary" data-signup style="margin-top:6px">Start earning</a>
+</section>
+
+<section>
+ <h2>Why members stay</h2>
+ <div class="grid">
+  <div class="proof"><strong>Instant payouts</strong>Approved earnings go straight to your wallet.</div>
+  <div class="proof"><strong>Verified tasks</strong>Every task is checked before it is listed.</div>
+  <div class="proof"><strong>WhatsApp Status ads</strong>Share an ad on your Status and earn when people see it.</div>
+ </div>
+</section>
+
+<section id="how">
+ <h2>How it works</h2>
+ <p class="sub">Three steps from sign-up to payout.</p>
+ <div class="grid">
+  <div class="proof"><strong>1. Sign up</strong>Create a free account in a minute.</div>
+  <div class="proof"><strong>2. Do tasks</strong>Choose tasks that fit your skills and time.</div>
+  <div class="proof"><strong>3. Get paid</strong>Withdraw your earnings once tasks are approved.</div>
+ </div>
+ <div class="video"><details><summary>Watch the 60-second walkthrough</summary><p class="sub" style="margin:10px 0 0">Add your video here: replace this block with your embedded video player.</p></details></div>
+</section>
+</main>
+<footer>© EarnHub. Earnings vary and are never guaranteed. <a href="#" id="open-terms2">Terms and Conditions</a></footer>
+</div>
+
+<dialog id="dlg">
+ <h2>Terms and Conditions</h2>
+ <p>Placeholder text: replace with your company’s full terms. Cover eligibility (age and region), task approval rules, payout timing and fees, account suspension, WhatsApp Status advertising rules, and how personal data is used.</p>
+ <p>Earnings depend on completed and approved tasks and are not guaranteed.</p>
+ <form method="dialog" style="display:flex;gap:10px;margin-top:14px"><button class="btn primary" value="ok" id="accept">I agree</button><button class="btn ghost" value="close">Close</button></form>
+</dialog>
+
+<script type="module">
+import { signUp, signIn, getSession } from './js/auth.js'
+import { supabase } from './js/supabase.js'
+
+getSession().then(s => { if (s) location.href = 'member.html' })
+
+const $ = id => document.getElementById(id)
+const err = m => $('err').textContent = m
+let mode = 'up';
+
+const tasks = [["Watch and rate a 30-second ad","Quick · 2 min","KSh 25"],["Share a brand ad on WhatsApp Status","Status ad · 24 hours","KSh 120"],["Complete a 5-question survey","Survey · 5 min","KSh 60"],["Test a mobile app and give feedback","Testing · 15 min","KSh 200"]];
+$('tasks').innerHTML=tasks.map(function(t){return '<div class="task"><div><h3>'+t[0]+'</h3><small>'+t[1]+'</small></div><div class="pay">'+t[2]+'</div></div>'}).join('');
+
+// Claude's Safaricom Validator
+function isSaf(v){
+  var d=v.replace(/\D/g,'');
+  if(d.indexOf('254')===0)d='0'+d.slice(3);
+  if(d.length===9)d='0'+d;
+  return /^(07[0129]\d|074[0-35-68]|075[7-9]|076[89]|011[0-5]|010[0-2])\d{6}$/.test(d)
+}
+
+function setMode(m){
+  mode = m;
+  var up = m === 'up';
+  $('t-up').setAttribute('aria-selected', up);
+  $('t-in').setAttribute('aria-selected', !up);
+  $('signup-only').hidden = $('confirm-wrap').hidden = $('terms-wrap').hidden = !up;
+  $('forgot').hidden = up;
+  $('submit').textContent = up ? 'Create account' : 'Log in';
+  $('pw').autocomplete = up ? 'new-password' : 'current-password';
+  $('err').textContent = '';
+  $('msg').style.display = 'none';
+}
+
+$('t-up').onclick = () => setMode('up');
+$('t-in').onclick = () => setMode('in');
+document.querySelectorAll('[data-signup]').forEach(a => a.addEventListener('click', () => { setMode('up'); setTimeout(() => $('name').focus(), 400); }));
+document.querySelector('header a').addEventListener('click', () => setMode('in'));
+document.querySelectorAll('[data-show]').forEach(b => b.onclick = () => { var i = $(b.dataset.show), s = i.type === 'password'; i.type = s ? 'text' : 'password'; b.textContent = s ? 'Hide' : 'Show'; });
+
+function openT(e){e.preventDefault();$('dlg').showModal()}
+$('open-terms').onclick=openT; $('open-terms2').onclick=openT; $('accept').onclick=()=>{$('terms').checked=true};
+
+$('form').onsubmit = async e => {
+  e.preventDefault(); err('');
+  
+  if (mode === 'up') {
+    if (!$('name').value.trim()) return err('Enter your full name.');
+    if (!isSaf($('phone').value)) return err('Enter a Safaricom number, e.g. 0712 345 678.');
+    if ($('pw').value.length < 8) return err('Password must be at least 8 characters.');
+    if ($('pw').value !== $('pw2').value) return err('Passwords do not match.');
+    if (!$('terms').checked) return err('Tick the box to accept the Terms.');
+    
+    try {
+      $('submit').textContent = 'Creating...';
+      
+      // Check for referral code in URL
+      const q = new URLSearchParams(location.search).get('ref');
+      
+      const { user } = await signUp({
+        name: $('name').value.trim(),
+        phone: $('phone').value.trim(),
+        email: $('email').value.trim(),
+        password: $('pw').value,
+        referrer_code: q || null
+      });
+
+      // Save the referral code to their profile immediately after signup
+      if(user && q) {
+         await supabase.from('profiles').update({ referrer_code: q }).eq('id', user.id)
+      }
+      
+      $('msg').style.display = 'block';
+      $('msg').textContent = 'Account created! Redirecting to dashboard...';
+      setTimeout(() => location.href = 'member.html', 1500);
+    } catch (ex) {
+      err(ex.message);
+      $('submit').textContent = 'Create account';
+    }
+  } else {
+    try {
+      $('submit').textContent = 'Logging in...';
+      await signIn({ email: $('email').value.trim(), password: $('pw').value });
+      location.href = 'member.html';
+    } catch (ex) {
+      err(ex.message);
+      $('submit').textContent = 'Log in';
+    }
+  }
+};
+setMode('up');
+</script>
+</body>
+</html>
