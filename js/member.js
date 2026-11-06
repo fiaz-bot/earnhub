@@ -15,7 +15,7 @@ const day = t => new Date(t || Date.now()).toISOString().slice(0, 10)
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))
 const fd  = t => new Date(t).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })
 
-let ME   = { id: null, plan: null, package_start: null, is_admin: false, referrer_code: null, earned: 0 }
+let ME   = { id: null, email: null, plan: null, package_start: null, is_admin: false, referrer_code: null, earned: 0 }
 let L    = []
 let T    = []
 let unlocksToday = []
@@ -206,8 +206,10 @@ document.addEventListener('click', async e => {
     const a = document.createElement('a'); a.href = l.image_url; a.download = 'ad.jpg'; a.target = '_blank'; a.click()
   }
 
+  // PAYSTACK INTEGRATION
   if (d.up) {
     const k = d.up, cur = ME.plan && !cyc() ? PLANS[ME.plan].p : 0, amt = PLANS[k].p - cur;
+    
     if (amt === 0) {
       if (!confirm(`Activate ${PLANS[k].n} for free?`)) return
       await supabase.from('payments').insert({ user_id: ME.id, kind: 'Package: ' + PLANS[k].n, amount: 0, status: 'success' })
@@ -218,19 +220,32 @@ document.addEventListener('click', async e => {
     }
 
     if (!confirm(`Pay ${kes(amt)} to buy ${PLANS[k].n}?`)) return
-    let phone = prompt("Enter M-Pesa number (e.g. 0712345678):")
-    if (!phone) return
-    phone = "254" + phone.trim().replace(/^0/, '').replace(/\D/g, '')
-    toast('Sending STK Push...')
 
-    const { data, error } = await supabase.functions.invoke('mpesa-stk', {
-      body: { phone, amount: amt, userId: ME.id, planName: PLANS[k].n }
-    })
-    if (error) return toast('Error: ' + error.message)
-    if (data.ResponseCode === '0') {
-      toast('Check your phone!')
-      setTimeout(async () => { await reload(); toast('Package active!') }, 10000)
-    } else { toast('Failed: ' + (data.errorMessage || 'Unknown')) }
+    const handler =PaystackPop.setup ({
+      key: 'pk_test_8e51975e8c45aa3413b7d51d61480f64bb5d26c8', // 👈 REPLACE THIS WITH YOUR PUBLIC KEY
+      email: ME.email || 'customer@earnhub.com',
+      amount: amt * 100, 
+      currency: 'KES',
+      metadata: {
+        custom_fields: [
+          { display_name: "User ID", variable_name: "user_id", value: ME.id },
+          { display_name: "Package", variable_name: "package_name", value: PLANS[k].n }
+        ]
+      },
+      callback: async function(response) {
+        toast('Payment successful! Activating...')
+        await supabase.from('payments').insert({ 
+          user_id: ME.id, kind: 'Package: ' + PLANS[k].n, amount: amt, mpesa_ref: response.reference, status: 'success' 
+        })
+        const updates = { plan: k }; 
+        if (cyc()) updates.package_start = new Date().toISOString();
+        await supabase.from('profiles').update(updates).eq('id', ME.id)
+        await reload(); 
+      },
+      onClose: function() { toast('Payment window closed.') }
+    });
+    
+    handler.openIframe();
   }
 
   if (b.id === 'go') {
@@ -264,8 +279,10 @@ function dataUrlToBlob(dataUrl) {
 
 ;(async () => {
   try {
-    const { profile } = await requireAuth()
-    ME.id = profile.id; ME.plan = profile.plan; ME.is_admin = profile.is_admin; ME.package_start = profile.package_start; ME.referral_bonus = profile.referral_bonus; ME.earned = profile.earned;
+    const { profile, user } = await requireAuth() // Ensure auth.js returns user
+    ME.id = profile.id; 
+    ME.email = user.email; // Save email for Paystack
+    ME.plan = profile.plan; ME.is_admin = profile.is_admin; ME.package_start = profile.package_start; ME.referral_bonus = profile.referral_bonus; ME.earned = profile.earned;
     $('live').hidden = false
     await loadAll(); render()
   } catch (err) { console.error(err); $('live').textContent = 'Error' }
