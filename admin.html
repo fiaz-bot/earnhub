@@ -41,45 +41,51 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);white-
 [hidden]{display:none!important}
 svg text{fill:var(--mut);font:11px 'DM Sans',sans-serif}
 
-/* Login Screen Styles */
+/* LOGIN SCREEN */
 #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; }
 #login-screen .card { width: 100%; max-width: 400px; padding: 30px; }
 #login-screen input { width: 100%; margin-bottom: 12px; padding: 12px; }
 #login-screen .btn { width: 100%; padding: 12px; font-size: 16px; margin-top: 10px; }
+
+/* MOBILE RESPONSIVE TABLES */
+@media (max-width: 768px) {
+  table thead { display: none; }
+  table, tbody, tr, td { display: block; width: 100%; }
+  tr { margin-bottom: 15px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--card); }
+  td { padding: 8px 0; border: none; text-align: right; display: flex; justify-content: space-between; align-items: center; white-space: normal; }
+  td::before { content: attr(data-label); font-weight: 700; color: var(--mut); text-align: left; padding-right: 15px; }
+  td:empty { display: none; }
+  .act { justify-content: flex-end; width: 100%; }
+}
 </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
 <div class="wrap" id="login-screen">
   <div class="logo" style="margin-bottom: 20px;"><i></i>EarnHub Admin</div>
   <div class="card">
     <h3>Admin Login</h3>
     <p class="sub">Log in to manage EarnHub.</p>
-    <p class="err" id="login-err" style="color:var(--bad); font-size:13px; min-height:18px;"></p>
+    <p id="login-err" style="color:var(--bad); font-size:13px; min-height:18px;"></p>
     <input type="email" id="login-email" placeholder="Admin Email">
     <input type="password" id="login-pw" placeholder="Password">
     <button class="btn gold" id="login-btn">Log In</button>
   </div>
 </div>
 
-<!-- ADMIN DASHBOARD (Hidden by default) -->
 <div class="wrap" id="admin-dashboard" hidden>
   <header><div class="logo"><i></i>EarnHub <span class="badge">Admin</span></div><div class="row"><small style="color:var(--mut)" id="now"></small><button class="btn ghost" id="reset">Refresh data</button></div></header>
   <div class="kpis" id="kpis"></div>
   <nav id="nav" role="tablist"></nav>
   <main id="main"></main>
-  <p class="sub" style="margin-top:28px;font-size:13px">Connected to Supabase.</p>
 </div>
 
-<!-- LOGIC -->
 <script type="module">
 import { supabase } from './js/supabase.js'
-import { signIn, signOut } from './js/auth.js'
+import { signIn } from './js/auth.js'
 
 const $ = id => document.getElementById(id)
 
-// 1. Handle Login
 $('login-btn').onclick = async () => {
   const email = $('login-email').value.trim()
   const pw = $('login-pw').value
@@ -90,41 +96,30 @@ $('login-btn').onclick = async () => {
   
   try {
     $('login-btn').textContent = 'Checking...'
-    
-    // Log them in
-    const { user } = await signIn({ email, password: pw })
-    
-    // Check if they are actually an admin
-    const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
-    
+    const { data: { user }, error: authErr } = await supabase.auth.signInWithPassword({ email, password: pw })
+    if (authErr) throw authErr
+    const { data: profile, error: profErr } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+    if (profErr) throw profErr
     if (!profile || !profile.is_admin) {
-      await signOut()
+      await supabase.auth.signOut()
       throw new Error('Access denied. You are not an admin.')
     }
-    
-    // If they are admin, show the dashboard and run the admin script
     $('login-screen').hidden = true
     $('admin-dashboard').hidden = false
     initAdmin()
-    
   } catch (err) {
     errEl.textContent = err.message
     $('login-btn').textContent = 'Log In'
   }
 }
 
-// 2. Load the admin script dynamically ONLY after login
 async function initAdmin() {
   try {
     const module = await import('./js/admin.js')
     if (module.init) module.init()
-  } catch (err) {
-    console.error('Failed to load admin.js', err)
-    alert('Error loading dashboard. Check console.')
-  }
+  } catch (err) { console.error(err) }
 }
 
-// 3. Check if they are already logged in when they refresh the page
 supabase.auth.getSession().then(async ({ data: { session } }) => {
   if (session) {
     const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single()
@@ -135,6 +130,5 @@ supabase.auth.getSession().then(async ({ data: { session } }) => {
     }
   }
 })
-
 </script>
 </body></html>
