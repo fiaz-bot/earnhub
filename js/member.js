@@ -221,8 +221,8 @@ document.addEventListener('click', async e => {
 
     if (!confirm(`Pay ${kes(amt)} to buy ${PLANS[k].n}?`)) return
 
-    const handler =PaystackPop.setup ({
-      key: 'pk_test_8e51975e8c45aa3413b7d51d61480f64bb5d26c8', // 👈 REPLACE THIS WITH YOUR PUBLIC KEY
+        const handler = PaystackPop.setup({
+      key: 'YOUR_PUBLIC_KEY', // Your pk_test key
       email: ME.email || 'customer@earnhub.com',
       amount: amt * 100, 
       currency: 'KES',
@@ -232,7 +232,8 @@ document.addEventListener('click', async e => {
           { display_name: "Package", variable_name: "package_name", value: PLANS[k].n }
         ]
       },
-      callback: async function(response) {
+      // FIXED: Changed 'callback' to 'onSuccess'
+      onSuccess: async function(response) {
         toast('Payment successful! Activating...')
         await supabase.from('payments').insert({ 
           user_id: ME.id, kind: 'Package: ' + PLANS[k].n, amount: amt, mpesa_ref: response.reference, status: 'success' 
@@ -242,7 +243,10 @@ document.addEventListener('click', async e => {
         await supabase.from('profiles').update(updates).eq('id', ME.id)
         await reload(); 
       },
-      onClose: function() { toast('Payment window closed.') }
+      // FIXED: Changed 'onClose' to 'onCancel'
+      onCancel: function() { 
+        toast('Payment window closed.') 
+      }
     });
     
     handler.openIframe();

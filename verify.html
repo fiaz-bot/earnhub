@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Verify your email</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef4f0;--ink:#0d2b21;--mut:#4b6258;--card:#fff;--line:#cfdcd4;--brand:#0f5c43;--brand-ink:#fff;--gold:#f4b52b;--gold-ink:#2a1d00}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1a14;--ink:#e8f3ec;--mut:#9bb3a6;--card:#112a20;--line:#24412f;--brand:#3fbf8f;--brand-ink:#04150e}}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'DM Sans',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:40px 30px;max-width:400px;width:90%;text-align:center;box-shadow:0 12px 40px -18px rgba(5,40,28,.35)}
+h1{font:800 28px 'Bricolage Grotesque',sans-serif;margin:0 0 10px}
+p{color:var(--mut);margin:0 0 24px}
+.icon{font-size:50px;margin-bottom:20px}
+.btn{font:700 16px 'DM Sans',sans-serif;border-radius:12px;padding:14px 22px;border:2px solid transparent;cursor:pointer;text-decoration:none;display:block;text-align:center;background:var(--brand);color:var(--brand-ink);transition:0.2s}
+.btn:hover{opacity:0.9}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink);margin-top:10px}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📧</div>
+    <h1>Check your email</h1>
+    <p>We sent a verification link to your email address. Please click the link to activate your EarnHub account.</p>
+    
+    <a href="index.html" class="btn">Go to Login</a>
+    <a href="#" class="btn ghost" onclick="alert('Please check your spam folder or contact support.')">Didn't get the email?</a>
+  </div>
+</body>
+</html>
