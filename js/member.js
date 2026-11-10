@@ -15,7 +15,7 @@ const day = t => new Date(t || Date.now()).toISOString().slice(0, 10)
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))
 const fd  = t => new Date(t).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })
 
-let ME   = { id: null, email: null, plan: null, package_start: null, is_admin: false, referrer_code: null, earned: 0 }
+let ME   = { id: null, name: null, email: null, plan: null, package_start: null, is_admin: false, referrer_code: null, earned: 0 }
 let L    = []
 let T    = []
 let unlocksToday = []
@@ -51,7 +51,10 @@ function render() {
   const t = today();
   const v = subs.filter(s => s.status === 'approved').reduce((a,s)=>a+Number(s.views),0);
 
+  // Update Top Bar Info
+  $('uname').textContent = ME.name || 'User';
   $('pb').textContent = ME.plan ? PLANS[ME.plan].n : 'No package';
+  
   $('ban').innerHTML = banner();
 
   $('kpis').innerHTML = [
@@ -160,7 +163,7 @@ async function loadAll() {
 async function reload() { 
   const { data: prof } = await supabase.from('profiles').select('*').eq('id', ME.id).single()
   if(prof) { 
-    ME.plan = prof.plan; ME.package_start = prof.package_start; ME.referral_bonus = prof.referral_bonus; ME.earned = prof.earned; 
+    ME.name = prof.name; ME.plan = prof.plan; ME.package_start = prof.package_start; ME.referral_bonus = prof.referral_bonus; ME.earned = prof.earned; 
   }
   await loadAll(); render() 
 }
@@ -221,8 +224,8 @@ document.addEventListener('click', async e => {
 
     if (!confirm(`Pay ${kes(amt)} to buy ${PLANS[k].n}?`)) return
 
-        const handler = PaystackPop.setup({
-      key: 'pk_test_8e51975e8c45aa3413b7d51d61480f64bb5d26c8', // Your pk_test key
+    const handler = PaystackPop.setup({
+      key: 'pk_test_8e51975e8c45aa3413b7d51d61480f64bb5d26c8', // 👈 PASTE YOUR PUBLIC KEY HERE
       email: ME.email || 'customer@earnhub.com',
       amount: amt * 100, 
       currency: 'KES',
@@ -232,7 +235,6 @@ document.addEventListener('click', async e => {
           { display_name: "Package", variable_name: "package_name", value: PLANS[k].n }
         ]
       },
-      // FIXED: Changed 'callback' to 'onSuccess'
       onSuccess: async function(response) {
         toast('Payment successful! Activating...')
         await supabase.from('payments').insert({ 
@@ -243,10 +245,7 @@ document.addEventListener('click', async e => {
         await supabase.from('profiles').update(updates).eq('id', ME.id)
         await reload(); 
       },
-      // FIXED: Changed 'onClose' to 'onCancel'
-      onCancel: function() { 
-        toast('Payment window closed.') 
-      }
+      onCancel: function() { toast('Payment window closed.') }
     });
     
     handler.openIframe();
@@ -281,13 +280,34 @@ function dataUrlToBlob(dataUrl) {
   for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); return new Blob([arr], { type: mime })
 }
 
+// LOGOUT & SESSION TIMEOUT LOGIC
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await supabase.auth.signOut()
+  location.href = 'index.html'
+})
+
+let idleTimer;
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(async () => {
+    alert("Your session has expired due to 15 minutes of inactivity. Please log in again.");
+    await supabase.auth.signOut();
+    location.href = 'index.html';
+  }, 15 * 60 * 1000); // 15 minutes
+}
+window.addEventListener('mousemove', resetIdleTimer);
+window.addEventListener('keydown', resetIdleTimer);
+window.addEventListener('click', resetIdleTimer);
+window.addEventListener('scroll', resetIdleTimer);
+resetIdleTimer();
+
 ;(async () => {
   try {
-    const { profile, user } = await requireAuth() // Ensure auth.js returns user
+    const { profile, user } = await requireAuth()
     ME.id = profile.id; 
-    ME.email = user.email; // Save email for Paystack
+    ME.name = profile.name;
+    ME.email = user.email;
     ME.plan = profile.plan; ME.is_admin = profile.is_admin; ME.package_start = profile.package_start; ME.referral_bonus = profile.referral_bonus; ME.earned = profile.earned;
-    $('live').hidden = false
     await loadAll(); render()
-  } catch (err) { console.error(err); $('live').textContent = 'Error' }
+  } catch (err) { console.error(err); }
 })()
