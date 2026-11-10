@@ -5,71 +5,159 @@
 <title>EarnHub Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#eef4f0;--ink:#0d2b21;--mut:#4b6258;--card:#fff;--line:#cfdcd4;--brand:#0f5c43;--brand-ink:#fff;--gold:#f4b52b;--gold-ink:#2a1d00;--bad:#c0392b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1a14;--ink:#e8f3ec;--mut:#9bb3a6;--card:#112a20;--line:#24412f;--brand:#3fbf8f;--brand-ink:#04150e;--bad:#ff8a7a}}
-:root[data-theme="dark"]{--bg:#0a1a14;--ink:#e8f3ec;--mut:#9bb3a6;--card:#112a20;--line:#24412f;--brand:#3fbf8f;--brand-ink:#04150e;--bad:#ff8a7a}
-*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'DM Sans',system-ui,sans-serif}
+:root {
+  --bg: #eef4f0; --ink: #0d2b21; --mut: #4b6258; --card: #fff; --line: #cfdcd4;
+  --brand: #0f5c43; --brand-ink: #fff; --gold: #f4b52b; --gold-ink: #2a1d00; --bad: #c0392b;
+  --sidebar-w: 260px;
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) {
+    --bg: #0a1a14; --ink: #e8f3ec; --mut: #9bb3a6; --card: #112a20; --line: #24412f;
+    --brand: #3fbf8f; --brand-ink: #04150e; --bad: #ff8a7a;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a1a14; --ink: #e8f3ec; --mut: #9bb3a6; --card: #112a20; --line: #24412f;
+  --brand: #3fbf8f; --brand-ink: #04150e; --bad: #ff8a7a;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 'DM Sans', system-ui, sans-serif; display: flex; min-height: 100vh; }
+h1, h2, h3 { font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif; line-height: 1.1; margin: 0; }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-w); background: var(--card); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 50;
+  transform: translateX(-100%); transition: transform 0.3s ease;
+}
+.sidebar.open { transform: translateX(0); }
+.sidebar-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
+.logo { font: 800 22px 'Bricolage Grotesque', sans-serif; display: flex; gap: 8px; align-items: center; }
+.logo i { width: 26px; height: 26px; border-radius: 8px; background: var(--gold); display: inline-block; }
+.close-btn { background: none; border: none; color: var(--ink); font-size: 28px; cursor: pointer; display: none; }
+
+/* SIDEBAR NAV */
+nav { display: flex; flex-direction: column; padding: 15px 10px; gap: 6px; overflow-y: auto; flex: 1; }
+nav button {
+  width: 100%; text-align: left; border: 0; background: transparent; color: var(--mut);
+  font: 700 14px 'DM Sans', sans-serif; padding: 12px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;
+}
+nav button:hover { background: var(--bg); }
+nav button[aria-selected=true] { background: var(--brand); color: var(--brand-ink); }
+
+/* MAIN WRAPPER */
+.main-wrapper { flex: 1; display: flex; flex-direction: column; width: 100%; margin-left: 0; transition: margin-left 0.3s ease; }
 
 /* TOP BAR */
-.topbar{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px))}
-.topbar-left{display:flex;align-items:center;gap:12px}
-.logo{font:800 20px 'Bricolage Grotesque',sans-serif;display:flex;gap:8px;align-items:center}
-.logo i{width:24px;height:24px;border-radius:6px;background:var(--gold);display:inline-block}
-.badge{background:var(--gold);color:var(--gold-ink);font-weight:700;font-size:11px;border-radius:99px;padding:2px 10px;text-transform:capitalize}
-.topbar-right{display:flex;align-items:center;gap:16px}
-.user-name{font-weight:700;font-size:14px;display:none}
-@media(min-width:600px){.user-name{display:block}}
-.logout-btn{background:transparent;border:1.5px solid var(--line);color:var(--bad);font:700 13px 'DM Sans',sans-serif;padding:6px 12px;border-radius:8px;cursor:pointer;transition:0.2s}
-.logout-btn:hover{background:var(--bad);color:#fff;border-color:var(--bad)}
+.topbar {
+  display: flex; justify-content: space-between; align-items: center; padding: 15px 20px;
+  background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10;
+  padding-top: calc(15px + env(safe-area-inset-top,0px));
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.menu-btn { background: none; border: none; color: var(--ink); font-size: 24px; cursor: pointer; }
+.badge { background: var(--gold); color: var(--gold-ink); font-weight: 700; font-size: 12px; border-radius: 99px; padding: 4px 12px; text-transform: capitalize; }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.user-name { font-weight: 700; font-size: 14px; display: none; }
+@media(min-width: 600px) { .user-name { display: block; } }
+.logout-btn { background: transparent; border: 1.5px solid var(--line); color: var(--bad); font: 700 13px 'DM Sans', sans-serif; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+.logout-btn:hover { background: var(--bad); color: #fff; border-color: var(--bad); }
 
-/* MAIN LAYOUT */
-.wrap{max-width:1000px;margin:0 auto;padding:0 16px 60px}
-nav{display:flex;gap:6px;overflow-x:auto;margin:16px 0;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:14px}
-nav button{flex:1 0 auto;border:0;background:transparent;color:var(--mut);font:700 14px 'DM Sans',sans-serif;padding:10px 14px;border-radius:10px;cursor:pointer;white-space:nowrap}
-nav button[aria-selected=true]{background:var(--brand);color:var(--brand-ink)}
+/* CONTENT */
+.content-area { padding: 20px; max-width: 1000px; margin: 0 auto; width: 100%; padding-bottom: 60px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.kpi small { color: var(--mut); display: block; font-size: 13px; }
+.kpi b { font: 800 24px 'Bricolage Grotesque', sans-serif; color: var(--brand); }
+.btn { font: 700 14px 'DM Sans', sans-serif; border-radius: 10px; padding: 10px 14px; border: 2px solid transparent; cursor: pointer; background: var(--brand); color: var(--brand-ink); }
+.btn.gold { background: var(--gold); color: var(--gold-ink); }
+.btn.ghost { background: transparent; border-color: var(--line); color: var(--ink); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.row { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.row:last-child { border-bottom: 0; }
+.row small, .sub { color: var(--mut); }
+.sub { margin: 4px 0 12px; }
+input, select { padding: 12px; border-radius: 9px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); font: 15px 'DM Sans', sans-serif; max-width: 100%; width: 100%; }
+.pill { font-size: 12px; font-weight: 700; border-radius: 99px; padding: 2px 9px; border: 1px solid var(--line); color: var(--mut); }
+.pill.ok { color: var(--brand); border-color: var(--brand); }
+.pill.wa { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+.plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.plan { border: 2px solid var(--line); border-radius: 14px; padding: 16px; text-align: center; }
+.plan.on { border-color: var(--brand); }
+.plan b { font: 800 22px 'Bricolage Grotesque', sans-serif; }
+.thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: var(--bg); }
+.form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom,0px)); background: var(--ink); color: var(--bg); padding: 12px 20px; border-radius: 12px; font-weight: 700; z-index: 99; text-align: center; width: 90%; max-width: 400px; }
+[hidden] { display: none !important; }
 
-/* CARDS AND UTILS */
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
-.kpi small{color:var(--mut);display:block}.kpi b{font:800 24px 'Bricolage Grotesque',sans-serif;color:var(--brand)}
-.btn{font:700 14px 'DM Sans',sans-serif;border-radius:10px;padding:9px 14px;border:2px solid transparent;cursor:pointer;background:var(--brand);color:var(--brand-ink)}
-.btn.gold{background:var(--gold);color:var(--gold-ink)}.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-.row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)}
-.row:last-child{border-bottom:0}.row small,.sub{color:var(--mut)}.sub{margin:4px 0 12px}
-input,select{padding:10px 11px;border-radius:9px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:15px 'DM Sans',sans-serif;max-width:100%}
-.pill{font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid var(--line);color:var(--mut)}
-.pill.ok{color:var(--brand);border-color:var(--brand)}.pill.wa{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
-.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-.plan{border:2px solid var(--line);border-radius:14px;padding:14px}.plan.on{border-color:var(--brand)}.plan b{font:800 22px 'Bricolage Grotesque',sans-serif}
-.thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--bg)}
-.form{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;z-index:99}
-[hidden]{display:none!important}
-</style></head>
+/* DESKTOP LAYOUT */
+@media(min-width: 860px) {
+  .sidebar { transform: translateX(0); }
+  .main-wrapper { margin-left: var(--sidebar-w); }
+  .menu-btn, .close-btn { display: none; }
+  .content-area { padding: 30px; }
+}
+
+/* OVERLAY */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; display: none; }
+.overlay.active { display: block; }
+</style>
+</head>
 <body>
 
-<header class="topbar">
-  <div class="topbar-left">
-    <div class="logo"><i></i>EarnHub</div>
-    <span class="badge" id="pb"></span>
-  </div>
-  <div class="topbar-right">
-    <span class="user-name" id="uname"></span>
-    <button class="logout-btn" id="logoutBtn">Log Out</button>
-  </div>
-</header>
+<div class="overlay" id="overlay"></div>
 
-<div class="wrap">
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo"><i></i>EarnHub</div>
+    <button class="close-btn" id="close-btn">×</button>
+  </div>
   <nav id="nav" role="tablist"></nav>
-  <div id="ban"></div>
-  <div class="kpis" id="kpis"></div>
-  <main id="main"></main>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="main-wrapper">
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-btn" id="menu-btn">☰</button>
+      <span class="badge" id="pb">Loading...</span>
+    </div>
+    <div class="topbar-right">
+      <span class="user-name" id="uname"></span>
+      <button class="logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+  </header>
+
+  <!-- DASHBOARD CONTENT -->
+  <main class="content-area">
+    <div id="ban"></div>
+    <div class="kpis" id="kpis"></div>
+    <div id="main"></div>
+  </main>
 </div>
 
 <div class="toast" id="toast" hidden></div>
 
 <script src="https://js.paystack.co/v1/inline.js"></script>
-<script type="module" src="js/member.js?v=5"></script>
-</body></html>
+<script type="module">
+  import './js/member.js?v=6'; // Load the logic
+  
+  // Sidebar Toggle Logic
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  const menuBtn = document.getElementById('menu-btn');
+  const closeBtn = document.getElementById('close-btn');
+
+  function toggleMenu() {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+  }
+
+  menuBtn.addEventListener('click', toggleMenu);
+  closeBtn.addEventListener('click', toggleMenu);
+  overlay.addEventListener('click', toggleMenu);
+</script>
+</body>
+</html>

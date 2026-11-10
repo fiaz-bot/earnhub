@@ -51,7 +51,7 @@ function render() {
   const t = today();
   const v = subs.filter(s => s.status === 'approved').reduce((a,s)=>a+Number(s.views),0);
 
-  // Update Top Bar Info
+  // Top bar updates
   $('uname').textContent = ME.name || 'User';
   $('pb').textContent = ME.plan ? PLANS[ME.plan].n : 'No package';
   
