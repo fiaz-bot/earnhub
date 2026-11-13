@@ -15,7 +15,7 @@ const day = t => new Date(t || Date.now()).toISOString().slice(0, 10)
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))
 const fd  = t => new Date(t).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })
 
-let ME   = { id: null, name: null, email: null, plan: null, package_start: null, is_admin: false, referrer_code: null, earned: 0 }
+let ME   = { id: null, name: null, email: null, phone: null, plan: null, package_start: null, is_admin: false, referrer_code: null, earned: 0 }
 let L    = []
 let T    = []
 let unlocksToday = []
@@ -65,12 +65,12 @@ function render() {
     ['Total views', v.toLocaleString()]
   ].map(k => `<div class="card kpi" style="margin:0"><small>${k[0]}</small><b>${k[1]}</b></div>`).join('')
 
-  const tabs = [['ad','Ads and images'],['tk','Tasks'],['sb','Submit views'],['hs','Earnings & Withdraw'],['pl','Packages'],['rf','Refer and earn']]
+  const tabs = [['ad','Ads and images'],['tk','Tasks'],['sb','Submit views'],['hs','Earnings & Withdraw'],['pl','Packages'],['rf','Refer and earn'],['st','Settings']]
   if (ME.is_admin) tabs.push(['ow','Add listings'])
 
   $('nav').innerHTML = tabs.map(x => `<button role="tab" data-t="${x[0]}" aria-selected="${x[0]===tab}">${x[1]}</button>`).join('')
 
-  if (document.activeElement && /^(at|vw|ak|sl|wamt|wphone)$/.test(document.activeElement.id)) return
+  if (document.activeElement && /^(at|vw|ak|sl|wamt|wphone|set-phone)$/.test(document.activeElement.id)) return
   
   if (tab === 'ad') $('main').innerHTML = V.ad();
   else if (tab === 'tk') $('main').innerHTML = V.tk();
@@ -78,6 +78,7 @@ function render() {
   else if (tab === 'hs') $('main').innerHTML = V.hs();
   else if (tab === 'pl') $('main').innerHTML = V.pl();
   else if (tab === 'rf') $('main').innerHTML = V.rf();
+  else if (tab === 'st') $('main').innerHTML = V.st();
   else if (tab === 'ow') $('main').innerHTML = V.ow();
 }
 
@@ -142,6 +143,25 @@ const V = {
     const c = ME.id.slice(0, 8), link = location.origin + '/?ref=' + c;
     return `<div class="card"><h3>Refer and earn</h3><div class="form"><input id="rl" readonly value="${link}" style="flex:1;min-width:220px"><button class="btn" data-copy="1">Copy Link</button></div></div>`
   },
+  st: () => {
+    return `<div class="card">
+      <h3>Account Settings</h3>
+      <p class="sub">Manage your account details here.</p>
+      
+      <div class="form" style="flex-direction:column; align-items:stretch; gap:15px;">
+        <div>
+          <label style="font-weight:700; font-size:14px; display:block; margin-bottom:5px;">Email Address</label>
+          <input type="email" value="${esc(ME.email || '')}" disabled style="opacity:0.7; cursor:not-allowed;">
+        </div>
+        
+        <div>
+          <label style="font-weight:700; font-size:14px; display:block; margin-bottom:5px;">M-Pesa Phone Number</label>
+          <input id="set-phone" type="tel" value="${esc(ME.phone || '')}" placeholder="e.g. 0712 345 678">
+          <button class="btn gold" id="save-phone-btn" style="margin-top:10px; width:100%;">Update Phone Number</button>
+        </div>
+      </div>
+    </div>`
+  },
   ow: () => {
     const rows = L.map(l => `<div class="row"><span>${esc(l.title)}</span><button class="btn ghost" data-tg="${l.id}">${l.on_air?'Off':'On'}</button></div>`).join('')
     return `<div class="card"><h3>Listings</h3>${rows}</div>`
@@ -163,7 +183,7 @@ async function loadAll() {
 async function reload() { 
   const { data: prof } = await supabase.from('profiles').select('*').eq('id', ME.id).single()
   if(prof) { 
-    ME.name = prof.name; ME.plan = prof.plan; ME.package_start = prof.package_start; ME.referral_bonus = prof.referral_bonus; ME.earned = prof.earned; 
+    ME.name = prof.name; ME.phone = prof.phone; ME.plan = prof.plan; ME.package_start = prof.package_start; ME.referral_bonus = prof.referral_bonus; ME.earned = prof.earned; 
   }
   await loadAll(); render() 
 }
@@ -174,6 +194,17 @@ document.addEventListener('click', async e => {
 
   if (d.t) { tab = d.t; shotDataUrl = null; render() }
   if (d.copy) { navigator.clipboard.writeText($('rl').value); toast('Copied.') }
+
+  if (b.id === 'save-phone-btn') {
+    const newPhone = $('set-phone').value.trim();
+    if (!newPhone || newPhone.length < 9) return toast('Enter a valid M-Pesa number.');
+    
+    b.textContent = 'Saving...';
+    await supabase.from('profiles').update({ phone: newPhone }).eq('id', ME.id);
+    ME.phone = newPhone;
+    await reload();
+    toast('Phone number updated!');
+  }
 
   if (b.id === 'wd-btn') {
     const amt = Number($('wamt').value)
@@ -225,7 +256,7 @@ document.addEventListener('click', async e => {
     if (!confirm(`Pay ${kes(amt)} to buy ${PLANS[k].n}?`)) return
 
     const handler = PaystackPop.setup({
-      key: 'pk_test_8e51975e8c45aa3413b7d51d61480f64bb5d26c8', // 👈 PASTE YOUR PUBLIC KEY HERE
+      key: 'pk_test_YOUR_PUBLIC_KEY', // 👈 PASTE YOUR PUBLIC KEY HERE
       email: ME.email || 'customer@earnhub.com',
       amount: amt * 100, 
       currency: 'KES',
@@ -304,9 +335,19 @@ resetIdleTimer();
 ;(async () => {
   try {
     const { profile, user } = await requireAuth()
+    
+    // LOCKOUT CHECK
+    if (profile.status === 'suspended') {
+      alert("Your account has been suspended by the Admin. Please contact support.");
+      await supabase.auth.signOut();
+      location.href = 'index.html';
+      return;
+    }
+    
     ME.id = profile.id; 
     ME.name = profile.name;
     ME.email = user.email;
+    ME.phone = profile.phone;
     ME.plan = profile.plan; ME.is_admin = profile.is_admin; ME.package_start = profile.package_start; ME.referral_bonus = profile.referral_bonus; ME.earned = profile.earned;
     await loadAll(); render()
   } catch (err) { console.error(err); }
