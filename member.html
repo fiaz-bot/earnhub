@@ -34,7 +34,7 @@ h1, h2, h3 { font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif; line-hei
 .sidebar-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
 .logo { font: 800 22px 'Bricolage Grotesque', sans-serif; display: flex; gap: 8px; align-items: center; }
 .logo i { width: 26px; height: 26px; border-radius: 8px; background: var(--gold); display: inline-block; }
-.close-btn { background: none; border: none; color: var(--ink); font-size: 28px; cursor: pointer; display: none; }
+.close-btn { background: none; border: none; color: var(--ink); font-size: 28px; cursor: pointer; display: block; }
 
 /* SIDEBAR NAV */
 nav { display: flex; flex-direction: column; padding: 15px 10px; gap: 6px; overflow-y: auto; flex: 1; }
@@ -55,11 +55,10 @@ nav button[aria-selected=true] { background: var(--brand); color: var(--brand-in
   padding-top: calc(15px + env(safe-area-inset-top,0px));
 }
 .topbar-left { display: flex; align-items: center; gap: 12px; }
-.menu-btn { background: none; border: none; color: var(--ink); font-size: 24px; cursor: pointer; }
+.menu-btn { background: none; border: none; color: var(--ink); font-size: 24px; cursor: pointer; display: block; }
 .badge { background: var(--gold); color: var(--gold-ink); font-weight: 700; font-size: 12px; border-radius: 99px; padding: 4px 12px; text-transform: capitalize; }
 .topbar-right { display: flex; align-items: center; gap: 16px; }
 .user-name { font-weight: 700; font-size: 14px; display: none; }
-@media(min-width: 600px) { .user-name { display: block; } }
 .logout-btn { background: transparent; border: 1.5px solid var(--line); color: var(--bad); font: 700 13px 'DM Sans', sans-serif; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
 .logout-btn:hover { background: var(--bad); color: #fff; border-color: var(--bad); }
 
@@ -69,7 +68,7 @@ nav button[aria-selected=true] { background: var(--brand); color: var(--brand-in
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
 .kpi small { color: var(--mut); display: block; font-size: 13px; }
 .kpi b { font: 800 24px 'Bricolage Grotesque', sans-serif; color: var(--brand); }
-.btn { font: 700 14px 'DM Sans', sans-serif; border-radius: 10px; padding: 10px 14px; border: 2px solid transparent; cursor: pointer; background: var(--brand); color: var(--brand-ink); }
+.btn { font: 700 14px 'DM Sans', sans-serif; border-radius: 10px; padding: 10px 14px; border: 2px solid transparent; cursor: pointer; background: var(--brand); color: var(--brand-ink); width: 100%; margin-bottom: 5px; }
 .btn.gold { background: var(--gold); color: var(--gold-ink); }
 .btn.ghost { background: transparent; border-color: var(--line); color: var(--ink); }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
@@ -95,7 +94,18 @@ input, select { padding: 12px; border-radius: 9px; border: 1.5px solid var(--lin
   .sidebar { transform: translateX(0); }
   .main-wrapper { margin-left: var(--sidebar-w); }
   .menu-btn, .close-btn { display: none; }
+  .form { flex-direction: row; }
+  .form input, .form select { flex: 1; width: auto; }
+  .form .btn { width: auto; margin-bottom: 0; }
   .content-area { padding: 30px; }
+}
+
+/* MOBILE FIXES FOR BUTTONS */
+@media(max-width: 859px) {
+  .row .btn { width: auto; }
+  .plans { grid-template-columns: 1fr; }
+  .form { flex-direction: column; align-items: stretch; }
+  .form .btn { width: 100%; }
 }
 
 /* OVERLAY */
@@ -142,7 +152,7 @@ input, select { padding: 12px; border-radius: 9px; border: 1.5px solid var(--lin
 
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script type="module">
-  import './js/member.js?v=6'; // Load the logic
+  import './js/member.js?v=7'; // Load the logic
   
   // Sidebar Toggle Logic
   const sidebar = document.getElementById('sidebar');
@@ -158,6 +168,13 @@ input, select { padding: 12px; border-radius: 9px; border: 1.5px solid var(--lin
   menuBtn.addEventListener('click', toggleMenu);
   closeBtn.addEventListener('click', toggleMenu);
   overlay.addEventListener('click', toggleMenu);
+
+  // Auto-close sidebar when a tab is clicked on mobile
+  document.getElementById('nav').addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON' && window.innerWidth < 860) {
+      toggleMenu();
+    }
+  });
 </script>
 </body>
 </html>

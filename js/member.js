@@ -192,7 +192,12 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return
   const d = b.dataset
 
-  if (d.t) { tab = d.t; shotDataUrl = null; render() }
+    if (d.t) { 
+    tab = d.t; 
+    shotDataUrl = null; 
+    $('main').innerHTML = ''; // Clear the screen instantly
+    render(); 
+  }
   if (d.copy) { navigator.clipboard.writeText($('rl').value); toast('Copied.') }
 
   if (b.id === 'save-phone-btn') {
