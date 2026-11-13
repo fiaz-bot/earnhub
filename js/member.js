@@ -256,7 +256,7 @@ document.addEventListener('click', async e => {
     if (!confirm(`Pay ${kes(amt)} to buy ${PLANS[k].n}?`)) return
 
     const handler = PaystackPop.setup({
-      key: 'pk_test_YOUR_PUBLIC_KEY', // 👈 PASTE YOUR PUBLIC KEY HERE
+      key: 'pk_live_e18c9f284f42b39a3f6550d8d0c6c91df3f3510d', // 👈 PASTE YOUR PUBLIC KEY HERE
       email: ME.email || 'customer@earnhub.com',
       amount: amt * 100, 
       currency: 'KES',
