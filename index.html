@@ -121,7 +121,7 @@ dialog h2{font-size:24px;margin-bottom:10px}dialog p{font-size:14px;color:var(--
    <p class="err" id="err" role="alert"></p>
    <button class="btn" type="submit" id="submit">Create account</button>
    <div class="msg" id="msg"></div>
-   <p class="small" id="forgot" hidden><a href="#">Forgot your password?</a></p>
+   <p class="small" id="forgot"><a href="#" id="forgot-link">Forgot your password?</a></p>
   </form>
  </div>
 </div>
@@ -165,6 +165,7 @@ dialog h2{font-size:24px;margin-bottom:10px}dialog p{font-size:14px;color:var(--
 
 <script type="module">
 import { signUp, signIn, getSession } from './js/auth.js'
+import { supabase } from './js/supabase.js'
 
 // If already logged in, redirect straight to the dashboard
 getSession().then(s => { if (s) location.href = 'member.html' })
@@ -189,7 +190,6 @@ function setMode(m){
   $('t-up').setAttribute('aria-selected', up);
   $('t-in').setAttribute('aria-selected', !up);
   $('signup-only').hidden = $('confirm-wrap').hidden = $('terms-wrap').hidden = !up;
-  $('forgot').hidden = up;
   $('submit').textContent = up ? 'Create account' : 'Log in';
   $('pw').autocomplete = up ? 'new-password' : 'current-password';
   $('err').textContent = '';
@@ -205,6 +205,23 @@ document.querySelectorAll('[data-show]').forEach(b => b.onclick = () => { var i 
 function openT(e){e.preventDefault();$('dlg').showModal()}
 $('open-terms').onclick=openT; $('open-terms2').onclick=openT; $('accept').onclick=()=>{$('terms').checked=true};
 
+// FORGOT PASSWORD LOGIC
+$('forgot-link').onclick = async (e) => {
+  e.preventDefault();
+  const email = prompt("Enter the email address you registered with:");
+  if (!email) return;
+
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: location.origin + '/update-password.html',
+    });
+    if (error) throw error;
+    alert("Password reset link sent! Check your email inbox.");
+  } catch (ex) {
+    alert("Error: " + ex.message);
+  }
+};
+
 $('form').onsubmit = async e => {
   e.preventDefault(); err('');
   
@@ -217,9 +234,7 @@ $('form').onsubmit = async e => {
     
     try {
       $('submit').textContent = 'Creating...';
-      
       const q = new URLSearchParams(location.search).get('ref');
-      
       await signUp({
         name: $('name').value.trim(),
         phone: $('phone').value.trim(),
@@ -227,7 +242,6 @@ $('form').onsubmit = async e => {
         password: $('pw').value,
         referrer_code: q || null
       });
-      
       $('msg').style.display = 'block';
       $('msg').textContent = 'Account created! Redirecting to verify email...';
       setTimeout(() => location.href = 'verify.html', 1500);
