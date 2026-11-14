@@ -192,12 +192,14 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return
   const d = b.dataset
 
-    if (d.t) { 
+  // FIXED: Clear main container instantly to prevent overlapping glitches
+  if (d.t) { 
     tab = d.t; 
     shotDataUrl = null; 
-    $('main').innerHTML = ''; // Clear the screen instantly
+    $('main').innerHTML = ''; 
     render(); 
   }
+  
   if (d.copy) { navigator.clipboard.writeText($('rl').value); toast('Copied.') }
 
   if (b.id === 'save-phone-btn') {
@@ -239,10 +241,20 @@ document.addEventListener('click', async e => {
     await reload(); toast('Unlocked.')
   }
 
+  // IMAGE DOWNLOAD (TEST MODE ENABLED)
   if (d.dl) {
     const l = L.find(x => x.id === d.dl)
-    if (!l.image_url) return toast('Image not found.')
-    const a = document.createElement('a'); a.href = l.image_url; a.download = 'ad.jpg'; a.target = '_blank'; a.click()
+    if (!l.image_url) return toast('Image not found. Admin needs to upload it.')
+    
+    // Note: To enforce the paywall later, uncomment the next line
+    // if (!isUn(l.id)) return toast('You must unlock this image first.')
+    
+    const a = document.createElement('a')
+    a.href = l.image_url
+    a.download = l.title.replace(/[^\w]+/g, '-') + '.jpg'
+    a.target = '_blank' // Opens in new tab to prevent mobile block
+    a.click()
+    toast('Downloading...')
   }
 
   // PAYSTACK INTEGRATION
@@ -261,7 +273,7 @@ document.addEventListener('click', async e => {
     if (!confirm(`Pay ${kes(amt)} to buy ${PLANS[k].n}?`)) return
 
     const handler = PaystackPop.setup({
-      key: 'pk_live_e18c9f284f42b39a3f6550d8d0c6c91df3f3510d', // 👈 PASTE YOUR PUBLIC KEY HERE
+      key: 'pk_test_YOUR_PUBLIC_KEY', // 👈 PASTE YOUR PUBLIC KEY HERE
       email: ME.email || 'customer@earnhub.com',
       amount: amt * 100, 
       currency: 'KES',
