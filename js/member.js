@@ -51,7 +51,6 @@ function render() {
   const t = today();
   const v = subs.filter(s => s.status === 'approved').reduce((a,s)=>a+Number(s.views),0);
 
-  // Top bar updates
   $('uname').textContent = ME.name || 'User';
   $('pb').textContent = ME.plan ? PLANS[ME.plan].n : 'No package';
   
@@ -65,8 +64,8 @@ function render() {
     ['Total views', v.toLocaleString()]
   ].map(k => `<div class="card kpi" style="margin:0"><small>${k[0]}</small><b>${k[1]}</b></div>`).join('')
 
+  // REMOVED 'ow' (Add listings) from member tabs
   const tabs = [['ad','Ads and images'],['tk','Tasks'],['sb','Submit views'],['hs','Earnings & Withdraw'],['pl','Packages'],['rf','Refer and earn'],['st','Settings']]
-  if (ME.is_admin) tabs.push(['ow','Add listings'])
 
   $('nav').innerHTML = tabs.map(x => `<button role="tab" data-t="${x[0]}" aria-selected="${x[0]===tab}">${x[1]}</button>`).join('')
 
@@ -79,7 +78,6 @@ function render() {
   else if (tab === 'pl') $('main').innerHTML = V.pl();
   else if (tab === 'rf') $('main').innerHTML = V.rf();
   else if (tab === 'st') $('main').innerHTML = V.st();
-  else if (tab === 'ow') $('main').innerHTML = V.ow();
 }
 
 const V = {
@@ -161,10 +159,6 @@ const V = {
         </div>
       </div>
     </div>`
-  },
-  ow: () => {
-    const rows = L.map(l => `<div class="row"><span>${esc(l.title)}</span><button class="btn ghost" data-tg="${l.id}">${l.on_air?'Off':'On'}</button></div>`).join('')
-    return `<div class="card"><h3>Listings</h3>${rows}</div>`
   }
 }
 
@@ -192,7 +186,6 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return
   const d = b.dataset
 
-  // FIXED: Clear main container instantly to prevent overlapping glitches
   if (d.t) { 
     tab = d.t; 
     shotDataUrl = null; 
@@ -205,7 +198,6 @@ document.addEventListener('click', async e => {
   if (b.id === 'save-phone-btn') {
     const newPhone = $('set-phone').value.trim();
     if (!newPhone || newPhone.length < 9) return toast('Enter a valid M-Pesa number.');
-    
     b.textContent = 'Saving...';
     await supabase.from('profiles').update({ phone: newPhone }).eq('id', ME.id);
     ME.phone = newPhone;
@@ -241,23 +233,17 @@ document.addEventListener('click', async e => {
     await reload(); toast('Unlocked.')
   }
 
-  // IMAGE DOWNLOAD (TEST MODE ENABLED)
   if (d.dl) {
     const l = L.find(x => x.id === d.dl)
-    if (!l.image_url) return toast('Image not found. Admin needs to upload it.')
-    
-    // Note: To enforce the paywall later, uncomment the next line
-    // if (!isUn(l.id)) return toast('You must unlock this image first.')
-    
+    if (!l.image_url) return toast('Image not found.')
     const a = document.createElement('a')
     a.href = l.image_url
     a.download = l.title.replace(/[^\w]+/g, '-') + '.jpg'
-    a.target = '_blank' // Opens in new tab to prevent mobile block
+    a.target = '_blank'
     a.click()
     toast('Downloading...')
   }
 
-  // PAYSTACK INTEGRATION
   if (d.up) {
     const k = d.up, cur = ME.plan && !cyc() ? PLANS[ME.plan].p : 0, amt = PLANS[k].p - cur;
     
@@ -303,11 +289,38 @@ document.addEventListener('click', async e => {
     const v = Math.floor(+$('vw').value), r = left(), l = L.find(x => x.id === $('sl').value)
     if (!(v > 0)) return toast('Enter views.'); if (!shotDataUrl) return toast('Upload screenshot.')
     if (r < PR) return toast('Daily limit reached.')
+    
     const ok = Math.min(v, r === Infinity ? v : Math.floor(r / PR));
-    const up = await supabase.storage.from(BUCKET).upload(`${ME.id}/${Date.now()}.jpg`, dataUrlToBlob(shotDataUrl), { contentType: 'image/jpeg' })
-    const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrl(up.data.path, 60 * 60 * 24 * 7)
-    await supabase.from('submissions').insert({ user_id: ME.id, listing_id: l.id, ad: l.title, views: ok, amount: ok * PR, screenshot: signed.signedUrl, status: 'pending' })
-    shotDataUrl = null; await reload(); toast('Submitted.')
+    
+    b.textContent = 'Uploading...';
+    
+    // FIXED UPLOAD LOGIC
+    try {
+      const blob = dataUrlToBlob(shotDataUrl);
+      // Simplified file name to prevent 400 Bad Request errors
+      const fileName = `${ME.id}/${Date.now()}.jpg`; 
+      
+      const { data: up, error: upErr } = await supabase.storage.from(BUCKET).upload(fileName, blob, { contentType: 'image/jpeg' });
+      
+      if (upErr) throw upErr;
+      
+      const { data: signed, error: signErr } = await supabase.storage.from(BUCKET).createSignedUrl(up.path, 60 * 60 * 24 * 7);
+      if (signErr) throw signErr;
+
+      const { error: subErr } = await supabase.from('submissions').insert({ 
+        user_id: ME.id, listing_id: l.id, ad: l.title, views: ok, amount: ok * PR, screenshot: signed.signedUrl, status: 'pending' 
+      });
+      
+      if (subErr) throw subErr;
+
+      shotDataUrl = null; 
+      await reload(); 
+      toast('Submitted for review!')
+      
+    } catch (err) {
+      alert("Upload failed: " + err.message);
+      b.textContent = 'Submit';
+    }
   }
 })
 
@@ -328,7 +341,6 @@ function dataUrlToBlob(dataUrl) {
   for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); return new Blob([arr], { type: mime })
 }
 
-// LOGOUT & SESSION TIMEOUT LOGIC
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   await supabase.auth.signOut()
   location.href = 'index.html'
@@ -341,7 +353,7 @@ function resetIdleTimer() {
     alert("Your session has expired due to 15 minutes of inactivity. Please log in again.");
     await supabase.auth.signOut();
     location.href = 'index.html';
-  }, 15 * 60 * 1000); // 15 minutes
+  }, 15 * 60 * 1000);
 }
 window.addEventListener('mousemove', resetIdleTimer);
 window.addEventListener('keydown', resetIdleTimer);
@@ -353,7 +365,6 @@ resetIdleTimer();
   try {
     const { profile, user } = await requireAuth()
     
-    // LOCKOUT CHECK
     if (profile.status === 'suspended') {
       alert("Your account has been suspended by the Admin. Please contact support.");
       await supabase.auth.signOut();
