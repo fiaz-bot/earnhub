@@ -3,10 +3,11 @@ import { supabase, BUCKET } from './supabase.js'
 import { requireAuth } from './auth.js'
 
 const PR = 20, FEE = 50;
+// PRICES UPDATED TO 3, 4, 5
 const PLANS = {
-  starter:  { p: 0,  cap: 500,      d: 3, n: 'Starter'  },
-  standard: { p: 1,  cap: 1000,     d: 5, n: 'Standard' },
-  pro:      { p: 2,  cap: Infinity, d: 7, n: 'Pro'      }
+  starter:  { p: 3,  cap: 500,      d: 3, n: 'Starter'  },
+  standard: { p: 4,  cap: 1000,     d: 5, n: 'Standard' },
+  pro:      { p: 5,  cap: Infinity, d: 7, n: 'Pro'      }
 };
 
 const $ = id => document.getElementById(id)
@@ -51,6 +52,7 @@ function render() {
   const t = today();
   const v = subs.filter(s => s.status === 'approved').reduce((a,s)=>a+Number(s.views),0);
 
+  // Top bar updates
   $('uname').textContent = ME.name || 'User';
   $('pb').textContent = ME.plan ? PLANS[ME.plan].n : 'No package';
   
@@ -64,7 +66,6 @@ function render() {
     ['Total views', v.toLocaleString()]
   ].map(k => `<div class="card kpi" style="margin:0"><small>${k[0]}</small><b>${k[1]}</b></div>`).join('')
 
-  // REMOVED 'ow' (Add listings) from member tabs
   const tabs = [['ad','Ads and images'],['tk','Tasks'],['sb','Submit views'],['hs','Earnings & Withdraw'],['pl','Packages'],['rf','Refer and earn'],['st','Settings']]
 
   $('nav').innerHTML = tabs.map(x => `<button role="tab" data-t="${x[0]}" aria-selected="${x[0]===tab}">${x[1]}</button>`).join('')
@@ -90,7 +91,21 @@ const V = {
     return `<div class="card"><h3>Properties and cars to advertise</h3>${rows || '<p>No listings yet.</p>'}</div>`
   },
   tk: () => {
-    const rows = T.filter(x => x.on_air).map(x => `<div class="row"><div><b>${esc(x.title)}</b><br><small>${esc(x.pay)}</small></div><b style="color:var(--brand)">${esc(x.pay)}</b></div>`).join('')
+    const rows = T.filter(x => x.on_air).map(x => {
+      let audioPlayer = '';
+      if (x.audio_url) {
+        audioPlayer = `<audio controls src="${x.audio_url}" style="width: 100%; height: 40px; margin-top: 10px;"></audio>`;
+      }
+      return `<div class="row" style="flex-direction: column; align-items: flex-start;">
+        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+          <div>
+            <b>${esc(x.title)}</b><br><small>${esc(x.pay)}</small>
+          </div>
+          <b style="color:var(--brand)">${esc(x.pay)}</b>
+        </div>
+        ${audioPlayer}
+      </div>`
+    }).join('')
     return `<div class="card"><h3>Available tasks</h3>${rows || '<p>No tasks right now.</p>'}</div>`
   },
   sb: () => {
@@ -259,7 +274,7 @@ document.addEventListener('click', async e => {
     if (!confirm(`Pay ${kes(amt)} to buy ${PLANS[k].n}?`)) return
 
     const handler = PaystackPop.setup({
-      key: 'pk_test_YOUR_PUBLIC_KEY', // 👈 PASTE YOUR PUBLIC KEY HERE
+      key: 'pk_live_e18c9f284f42b39a3f6550d8d0c6c91df3f3510d', // 👈 PASTE YOUR PUBLIC KEY HERE
       email: ME.email || 'customer@earnhub.com',
       amount: amt * 100, 
       currency: 'KES',
@@ -294,15 +309,14 @@ document.addEventListener('click', async e => {
     
     b.textContent = 'Uploading...';
     
-    // FIXED UPLOAD LOGIC
     try {
       const blob = dataUrlToBlob(shotDataUrl);
-      // Simplified file name to prevent 400 Bad Request errors
       const fileName = `${ME.id}/${Date.now()}.jpg`; 
       
       const { data: up, error: upErr } = await supabase.storage.from(BUCKET).upload(fileName, blob, { contentType: 'image/jpeg' });
-      
       if (upErr) throw upErr;
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       const { data: signed, error: signErr } = await supabase.storage.from(BUCKET).createSignedUrl(up.path, 60 * 60 * 24 * 7);
       if (signErr) throw signErr;
