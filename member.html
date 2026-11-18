@@ -24,7 +24,7 @@
 body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 'DM Sans', system-ui, sans-serif; display: flex; min-height: 100vh; }
 h1, h2, h3 { font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif; line-height: 1.1; margin: 0; }
 
-/* SIDEBAR */
+/* SIDEBAR (Desktop) */
 .sidebar {
   width: var(--sidebar-w); background: var(--card); border-right: 1px solid var(--line);
   display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 50;
@@ -60,22 +60,16 @@ nav button[aria-selected=true] { background: var(--brand); color: var(--brand-in
 .topbar-right { display: flex; align-items: center; gap: 16px; }
 .user-name { font-weight: 700; font-size: 14px; display: none; }
 .logout-btn { background: transparent; border: 1.5px solid var(--line); color: var(--bad); font: 700 13px 'DM Sans', sans-serif; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-.logout-btn:hover { background: var(--bad); color: #fff; border-color: var(--bad); }
 
-/* CONTENT */
+/* CONTENT AREA */
 .content-area { padding: 20px; max-width: 1000px; margin: 0 auto; width: 100%; padding-bottom: 60px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
-.kpi small { color: var(--mut); display: block; font-size: 13px; }
-.kpi b { font: 800 24px 'Bricolage Grotesque', sans-serif; color: var(--brand); }
 .btn { font: 700 14px 'DM Sans', sans-serif; border-radius: 10px; padding: 10px 14px; border: 2px solid transparent; cursor: pointer; background: var(--brand); color: var(--brand-ink); width: 100%; margin-bottom: 5px; }
 .btn.gold { background: var(--gold); color: var(--gold-ink); }
 .btn.ghost { background: transparent; border-color: var(--line); color: var(--ink); }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .row { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .row:last-child { border-bottom: 0; }
-.row small, .sub { color: var(--mut); }
-.sub { margin: 4px 0 12px; }
 input, select { padding: 12px; border-radius: 9px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); font: 15px 'DM Sans', sans-serif; max-width: 100%; width: 100%; }
 .pill { font-size: 12px; font-weight: 700; border-radius: 99px; padding: 2px 9px; border: 1px solid var(--line); color: var(--mut); }
 .pill.ok { color: var(--brand); border-color: var(--brand); }
@@ -89,23 +83,32 @@ input, select { padding: 12px; border-radius: 9px; border: 1.5px solid var(--lin
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom,0px)); background: var(--ink); color: var(--bg); padding: 12px 20px; border-radius: 12px; font-weight: 700; z-index: 99; text-align: center; width: 90%; max-width: 400px; }
 [hidden] { display: none !important; }
 
+/* KPI DASHBOARD (RedotPay Style for Mobile) */
+.kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+.kpi { background: var(--card); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+.kpi small { color: var(--mut); font-size: 13px; margin-bottom: 6px; font-weight: 500; }
+.kpi b { font: 800 22px 'Bricolage Grotesque', sans-serif; color: var(--brand); }
+/* Make the first KPI span 2 columns on mobile to act like a total balance */
+.kpi:first-child { grid-column: span 2; background: var(--brand); color: var(--brand-ink); }
+.kpi:first-child small { color: rgba(255,255,255,0.7); }
+.kpi:first-child b { color: #fff; font-size: 32px; }
+
 /* DESKTOP LAYOUT */
 @media(min-width: 860px) {
   .sidebar { transform: translateX(0); }
   .main-wrapper { margin-left: var(--sidebar-w); }
   .menu-btn, .close-btn { display: none; }
+  .user-name { display: block; }
   .form { flex-direction: row; }
   .form input, .form select { flex: 1; width: auto; }
   .form .btn { width: auto; margin-bottom: 0; }
   .content-area { padding: 30px; }
-}
-
-/* MOBILE FIXES FOR BUTTONS */
-@media(max-width: 859px) {
-  .row .btn { width: auto; }
-  .plans { grid-template-columns: 1fr; }
-  .form { flex-direction: column; align-items: stretch; }
-  .form .btn { width: 100%; }
+  
+  /* PC KPI style (back to normal grid) */
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .kpi:first-child { grid-column: auto; background: var(--card); color: var(--ink); }
+  .kpi:first-child small { color: var(--mut); }
+  .kpi:first-child b { color: var(--brand); font-size: 24px; }
 }
 
 /* OVERLAY */
@@ -152,7 +155,7 @@ input, select { padding: 12px; border-radius: 9px; border: 1.5px solid var(--lin
 
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script type="module">
-  import './js/member.js?v=7'; // Load the logic
+  import './js/member.js?v=8'; // Load the logic
   
   // Sidebar Toggle Logic
   const sidebar = document.getElementById('sidebar');
