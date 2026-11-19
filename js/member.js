@@ -210,34 +210,44 @@ document.addEventListener('click', async e => {
           { display_name: "Package", variable_name: "package_name", value: PLANS[k].n }
         ]
       },
-          onSuccess: async function(response) {
-        toast('Payment successful! Activating your package...')
+              onSuccess: async function(response) {
+        toast('Verifying payment...');
         
-        // 1. Save the payment
-        await supabase.from('payments').insert({ 
-          user_id: ME.id, 
-          kind: 'Package: ' + PLANS[k].n, 
-          amount: amt, 
-          mpesa_ref: response.reference, 
-          status: 'success', 
-          withdraw_status: 'completed' // Mark as completed
-        })
-        
-        // 2. Automatically activate the package
-        await supabase.from('profiles').update({ 
-          plan: k, 
-          package_status: 'active',
-          package_start: new Date().toISOString()
-        }).eq('id', ME.id)
-        
-        // 3. Reload the screen instantly
-        await reload(); 
-        toast('Package activated successfully!');
+        try {
+          // 1. Verify the transaction with Paystack using your test secret key
+          const paystackRes = await fetch(`https://api.paystack.co/transaction/verify/${response.reference}`, {
+            headers: {
+              Authorization: `Bearer YOUR_PAYSTACK_SECRET_KEY` // 👈 PASTE YOUR SECRET KEY HERE
+            }
+          });
+          const paystackData = await paystackRes.json();
+
+          // 2. If Paystack confirms it's successful and the amount matches
+          if (paystackData.status && paystackData.data.status === 'success' && paystackData.data.amount === (amt * 100)) {
+            
+            // Save the payment
+            await supabase.from('payments').insert({ 
+              user_id: ME.id, kind: 'Package: ' + PLANS[k].n, amount: amt, 
+              mpesa_ref: response.reference, status: 'success', withdraw_status: 'completed'
+            })
+            
+            // Activate the package automatically
+            await supabase.from('profiles').update({ 
+              plan: k, 
+              package_status: 'active',
+              package_start: new Date().toISOString()
+            }).eq('id', ME.id)
+
+            await reload(); 
+            toast('Package activated successfully!');
+          } else {
+            toast('Payment verification failed. Contact support.');
+          }
+        } catch (err) {
+          console.error(err);
+          toast('Error verifying payment.');
+        }
       },
-      onCancel: function() { toast('Payment window closed.') }
-    });
-    handler.openIframe();
-  }
 
   if (b.id === 'save-phone-btn') {
     const newPhone = $('set-phone').value.trim();

@@ -56,20 +56,16 @@ const V = {
     const rows = S.P.filter(p => p.kind === 'Withdrawal').map(p => `<tr><td data-label="Date">${fd(p.created_at)}</td><td data-label="Member">${mem(p.user_id)?.name || '—'}<br><small>${mem(p.user_id)?.phone}</small></td><td data-label="Amount"><b>${kes(p.amount)}</b></td><td data-label="Status">${pill(p.withdraw_status)}</td><td data-label="Action">${p.withdraw_status === 'pending' ? `<div class="act"><button class="btn" data-wda="${p.id}">Mark Paid</button></div>` : '—'}</td></tr>`).join('')
     return `<div class="card"><h3>Withdrawals</h3><table><tbody>${rows || '<tr><td>No requests.</td></tr>'}</tbody></table></div>`
   },
-  py: () => `<div class="card"><h3>Payments</h3><p>Payment history will appear here.</p></div>`,
-  mb: () => {
-    const rows = S.M.filter(m => ((m.name||'')+(m.phone||'')).toLowerCase().includes(q.toLowerCase())).map(m => `<tr>
-      <td data-label="Member"><b>${m.name}</b><br><small>${m.email}</small></td>
-      <td data-label="Phone">${m.phone}</td>
-      <td data-label="Package">${pill(m.plan)}</td>
-      <td data-label="Status">${pill(m.package_status || 'none')}</td>
-      <td data-label="Balance"><b>${kes(m.earned)}</b></td>
-      <td data-label="Action">
-        ${m.package_status === 'pending' ? `<button class="btn gold" data-approve="${m.id}">Approve Pkg</button>` : ''}
-        <button class="btn ghost" data-sus="${m.id}">${m.status === 'suspended' ? 'Activate' : 'Suspend'}</button>
-      </td>
+    py: () => {
+    const rows = S.P.map(p => `<tr>
+      <td data-label="Date">${fd(p.created_at)}</td>
+      <td data-label="Member">${mem(p.user_id)?.name || '—'}</td>
+      <td data-label="Type">${p.kind}</td>
+      <td data-label="Amount"><b>${kes(p.amount)}</b></td>
+      <td data-label="Ref">${p.mpesa_ref || '—'}</td>
+      <td data-label="Status">${pill(p.status)}</td>
     </tr>`).join('')
-    return `<div class="card"><h3>Members</h3><div class="tools"><input id="q" type="search" placeholder="Search..." value="${q}"></div><table><tbody>${rows || '<tr><td>No members.</td></tr>'}</tbody></table></div>`
+    return `<div class="card"><h3>All Payments</h3><table><tbody>${rows || '<tr><td>No payments yet.</td></tr>'}</tbody></table></div>`
   },
   
   // TASKS AND LISTINGS RESTORED
