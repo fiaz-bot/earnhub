@@ -3,11 +3,10 @@ import { supabase, BUCKET } from './supabase.js'
 import { requireAuth } from './auth.js'
 
 const PR = 20, FEE = 50;
-// PRICES UPDATED TO 3, 4, 5
 const PLANS = {
-  starter:  { p: 3,  cap: 500,      d: 3, n: 'Starter'  },
-  standard: { p: 4,  cap: 1000,     d: 5, n: 'Standard' },
-  pro:      { p: 5,  cap: Infinity, d: 7, n: 'Pro'      }
+  bronze: { p: 300,  cap: 500,      d: 3, n: 'Bronze'  },
+  silver: { p: 500,  cap: 1000,     d: 5, n: 'Silver' },
+  gold:   { p: 1000, cap: Infinity, d: 7, n: 'Gold'   }
 };
 
 const $ = id => document.getElementById(id)
@@ -16,14 +15,8 @@ const day = t => new Date(t || Date.now()).toISOString().slice(0, 10)
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))
 const fd  = t => new Date(t).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })
 
-let ME   = { id: null, name: null, email: null, phone: null, plan: null, package_start: null, is_admin: false, referrer_code: null, earned: 0 }
-let L    = []
-let T    = []
-let unlocksToday = []
-let subs  = []
-let pays  = []
-let tab   = 'ad'
-let shotDataUrl = null
+let ME   = { id: null, name: null, email: null, phone: null, plan: null, package_status: null, package_start: null, is_admin: false, earned: 0 }
+let L    = [], T = [], unlocksToday = [], subs = [], pays = [], tab = 'ad', shotDataUrl = null
 
 function toast(m) {
   const t = $('toast'); t.textContent = m; t.hidden = false
@@ -33,7 +26,7 @@ function toast(m) {
 const DAY = 864e5, CYC = 7;
 const used = () => ME.package_start ? Math.floor((Date.now() - new Date(ME.package_start).getTime()) / DAY) : 0;
 const cyc = () => !ME.plan || used() >= CYC;
-const active = () => !!ME.plan && used() < PLANS[ME.plan].d;
+const active = () => ME.package_status === 'active' && used() < (PLANS[ME.plan]?.d || 0);
 const left = () => { if(!active()) return 0; const c = PLANS[ME.plan].cap; return c === Infinity ? Infinity : Math.max(0, c - today()); }
 
 const today = () => subs.filter(s => s.created_at.slice(0, 10) === day() && s.status !== 'rejected').reduce((a, s) => a + Number(s.amount), 0)
@@ -41,9 +34,9 @@ const isUn = id => unlocksToday.includes(id)
 
 function banner() {
   let s = '';
-  if (!ME.plan) s = 'Choose a package to start earning.';
-  else if (used() >= CYC) s = 'Your 7-day cycle is complete and your payout is due. Buy a package to start a new cycle.';
-  else if (!active()) s = 'Your ' + PLANS[ME.plan].n + ' package has ended after ' + PLANS[ME.plan].d + ' working days. Upgrade to keep earning.';
+  if (ME.package_status === 'none') s = 'No active package. Please request one below.';
+  else if (ME.package_status === 'pending') s = 'Your package request is pending Admin approval.';
+  else if (!active()) s = 'Your package has expired. Please renew to keep earning.';
   return s ? `<div class="card" style="border-color:var(--gold)"><div class="row" style="border:0;padding:0"><b>${s}</b><button class="btn gold" data-t="pl">See packages</button></div></div>` : '';
 }
 
@@ -52,22 +45,19 @@ function render() {
   const t = today();
   const v = subs.filter(s => s.status === 'approved').reduce((a,s)=>a+Number(s.views),0);
 
-  // Top bar updates
   $('uname').textContent = ME.name || 'User';
   $('pb').textContent = ME.plan ? PLANS[ME.plan].n : 'No package';
-  
   $('ban').innerHTML = banner();
 
   $('kpis').innerHTML = [
     ['Earned today', kes(t)],
-    ['Daily limit', ME.plan ? (cap === Infinity ? 'No limit' : kes(cap)) : '—'],
+    ['Daily limit', ME.plan && active() ? (cap === Infinity ? 'No limit' : kes(cap)) : '—'],
     ['Working days left', active() ? PLANS[ME.plan].d - used() : 0],
     ['Total earned', kes(ME.earned || 0)],
     ['Total views', v.toLocaleString()]
   ].map(k => `<div class="card kpi" style="margin:0"><small>${k[0]}</small><b>${k[1]}</b></div>`).join('')
 
   const tabs = [['ad','Ads and images'],['tk','Tasks'],['sb','Submit views'],['hs','Earnings & Withdraw'],['pl','Packages'],['rf','Refer and earn'],['st','Settings']]
-
   $('nav').innerHTML = tabs.map(x => `<button role="tab" data-t="${x[0]}" aria-selected="${x[0]===tab}">${x[1]}</button>`).join('')
 
   if (document.activeElement && /^(at|vw|ak|sl|wamt|wphone|set-phone)$/.test(document.activeElement.id)) return
@@ -93,18 +83,12 @@ const V = {
   tk: () => {
     const rows = T.filter(x => x.on_air).map(x => {
       let audioPlayer = '';
-      if (x.audio_url) {
-        audioPlayer = `<audio controls src="${x.audio_url}" style="width: 100%; height: 40px; margin-top: 10px;"></audio>`;
-      }
+      if (x.audio_url) audioPlayer = `<audio controls src="${x.audio_url}" style="width: 100%; height: 40px; margin-top: 10px;"></audio>`;
       return `<div class="row" style="flex-direction: column; align-items: flex-start;">
         <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-          <div>
-            <b>${esc(x.title)}</b><br><small>${esc(x.pay)}</small>
-          </div>
+          <div><b>${esc(x.title)}</b><br><small>${esc(x.pay)}</small></div>
           <b style="color:var(--brand)">${esc(x.pay)}</b>
-        </div>
-        ${audioPlayer}
-      </div>`
+        </div>${audioPlayer}</div>`
     }).join('')
     return `<div class="card"><h3>Available tasks</h3>${rows || '<p>No tasks right now.</p>'}</div>`
   },
@@ -131,26 +115,40 @@ const V = {
         <button class="btn gold" id="wd-btn">Request Withdrawal</button>
       </div>
     </div>`
-
-    if (ME.earned < 100) {
-       wdBox = `<div class="card" style="background:var(--bg);"><p class="sub" style="margin:0; text-align:center;">You need at least <b>KES 100</b> in available balance to withdraw.</p></div>`
-    }
+    if (ME.earned < 100) wdBox = `<div class="card" style="background:var(--bg);"><p class="sub" style="margin:0; text-align:center;">You need at least <b>KES 100</b> in available balance to withdraw.</p></div>`
 
     return `${wdBox}
     <div class="card"><h3>Earnings History</h3>${rows || '<p class="sub">Nothing yet.</p>'}</div>
     <div class="card"><h3>Transactions</h3>${localPays || '<p class="sub">No transactions yet.</p>'}</div>`
   },
   pl: () => {
-    const n = used(), cur = ME.plan && !cyc() ? PLANS[ME.plan].p : 0;
-    return `<div class="card"><h3>Packages</h3><div class="plans">${Object.keys(PLANS).map(k => {
-      const p = PLANS[k], on = ME.plan === k && !cyc(), can = cyc() || n < p.d, amt = p.p - cur;
-      let btn = '';
-      if (on) btn = active() ? '<span class="pill ok">Current package</span>' : '<span class="pill wa">Ended</span>';
-      else if (!can) btn = '<span class="pill">Available next cycle</span>';
-      else if (amt <= 0) btn = '';
-      else btn = `<button class="btn gold" data-up="${k}">${cur?'Upgrade':'Buy'} for ${p.p === 0 ? 'Free' : kes(amt)}</button>`;
-      return `<div class="plan${on?' on':''}"><b>${p.n}</b><p style="margin:6px 0">${p.p === 0 ? 'Free' : kes(p.p)}<br>${p.d} working days<br>${p.cap === Infinity ? 'No limit' : 'Up to ' + kes(p.cap) + '/day'}</p>${btn}</div>`
-    }).join('')}</div></div>`
+    if (!ME.package_status || ME.package_status === 'none') {
+      return `<div class="card" style="text-align:center; padding: 40px 20px;">
+        <h3 style="color:var(--brand); margin-bottom: 10px;">No Active Package</h3>
+        <p class="sub">You need an active package to start earning. Pay below to get started.</p>
+        <div class="plans" style="margin-top:20px; grid-template-columns: 1fr;">
+          ${Object.keys(PLANS).map(k => `<button class="btn gold" data-req="${k}" style="margin-bottom:10px;">Pay ${kes(PLANS[k].p)} for ${PLANS[k].n}</button>`).join('')}
+        </div>
+      </div>`;
+    }
+    if (ME.package_status === 'pending') {
+      return `<div class="card" style="text-align:center; padding: 40px 20px;">
+        <h3 style="color:var(--gold-ink); margin-bottom: 10px;">Payment Received</h3>
+        <p class="sub">Your payment was successful. Admin is reviewing your account and will activate it shortly.</p>
+      </div>`;
+    }
+    if (active()) {
+       return `<div class="card"><h3>Your Active Package</h3>
+       <p class="sub">You are currently on the <b>${PLANS[ME.plan].n}</b> package.</p>
+       <div class="plan on"><b>${PLANS[ME.plan].n}</b><p>${PLANS[ME.plan].d} working days</p></div></div>`;
+    }
+    return `<div class="card" style="text-align:center; padding: 40px 20px;">
+        <h3 style="color:var(--bad); margin-bottom: 10px;">Package Expired</h3>
+        <p class="sub">Your package has ended. Renew below to continue earning.</p>
+        <div class="plans" style="margin-top:20px; grid-template-columns: 1fr;">
+          ${Object.keys(PLANS).map(k => `<button class="btn gold" data-req="${k}" style="margin-bottom:10px;">Renew ${PLANS[k].n} (${kes(PLANS[k].p)})</button>`).join('')}
+        </div>
+      </div>`;
   },
   rf: () => {
     const c = ME.id.slice(0, 8), link = location.origin + '/?ref=' + c;
@@ -159,19 +157,10 @@ const V = {
   st: () => {
     return `<div class="card">
       <h3>Account Settings</h3>
-      <p class="sub">Manage your account details here.</p>
-      
       <div class="form" style="flex-direction:column; align-items:stretch; gap:15px;">
-        <div>
-          <label style="font-weight:700; font-size:14px; display:block; margin-bottom:5px;">Email Address</label>
-          <input type="email" value="${esc(ME.email || '')}" disabled style="opacity:0.7; cursor:not-allowed;">
-        </div>
-        
-        <div>
-          <label style="font-weight:700; font-size:14px; display:block; margin-bottom:5px;">M-Pesa Phone Number</label>
-          <input id="set-phone" type="tel" value="${esc(ME.phone || '')}" placeholder="e.g. 0712 345 678">
-          <button class="btn gold" id="save-phone-btn" style="margin-top:10px; width:100%;">Update Phone Number</button>
-        </div>
+        <div><label>Email Address</label><input type="email" value="${esc(ME.email || '')}" disabled style="opacity:0.7;"></div>
+        <div><label>M-Pesa Phone Number</label><input id="set-phone" type="tel" value="${esc(ME.phone || '')}" placeholder="0712xxxxxx">
+        <button class="btn gold" id="save-phone-btn" style="margin-top:10px; width:100%;">Update Phone Number</button></div>
       </div>
     </div>`
   }
@@ -192,7 +181,7 @@ async function loadAll() {
 async function reload() { 
   const { data: prof } = await supabase.from('profiles').select('*').eq('id', ME.id).single()
   if(prof) { 
-    ME.name = prof.name; ME.phone = prof.phone; ME.plan = prof.plan; ME.package_start = prof.package_start; ME.referral_bonus = prof.referral_bonus; ME.earned = prof.earned; 
+    ME.name = prof.name; ME.phone = prof.phone; ME.plan = prof.plan; ME.package_status = prof.package_status; ME.package_start = prof.package_start; ME.referral_bonus = prof.referral_bonus; ME.earned = prof.earned; 
   }
   await loadAll(); render() 
 }
@@ -201,42 +190,54 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return
   const d = b.dataset
 
-  if (d.t) { 
-    tab = d.t; 
-    shotDataUrl = null; 
-    $('main').innerHTML = ''; 
-    render(); 
-  }
-  
+  if (d.t) { tab = d.t; shotDataUrl = null; $('main').innerHTML = ''; render(); }
   if (d.copy) { navigator.clipboard.writeText($('rl').value); toast('Copied.') }
+
+  // PAYSTACK INTEGRATION FOR PACKAGE REQUEST
+  if (d.req) {
+    const k = d.req, amt = PLANS[k].p;
+    if (!confirm(`Pay ${kes(amt)} for ${PLANS[k].n} package?`)) return;
+
+    const handler = PaystackPop.setup({
+      key: 'pk_live_e18c9f284f42b39a3f6550d8d0c6c91df3f3510d', // 👈 PASTE YOUR PUBLIC KEY HERE
+      email: ME.email || 'customer@earnhub.com',
+      amount: amt * 100, 
+      currency: 'KES',
+      metadata: {
+        custom_fields: [
+          { display_name: "User ID", variable_name: "user_id", value: ME.id },
+          { display_name: "Package", variable_name: "package_name", value: PLANS[k].n }
+        ]
+      },
+      onSuccess: async function(response) {
+        toast('Payment successful! Waiting for Admin approval...')
+        await supabase.from('payments').insert({ user_id: ME.id, kind: 'Package: ' + PLANS[k].n, amount: amt, mpesa_ref: response.reference, status: 'success', withdraw_status: 'pending' })
+        await supabase.from('profiles').update({ plan: k, package_status: 'pending' }).eq('id', ME.id)
+        await reload(); 
+      },
+      onCancel: function() { toast('Payment window closed.') }
+    });
+    handler.openIframe();
+  }
 
   if (b.id === 'save-phone-btn') {
     const newPhone = $('set-phone').value.trim();
     if (!newPhone || newPhone.length < 9) return toast('Enter a valid M-Pesa number.');
     b.textContent = 'Saving...';
     await supabase.from('profiles').update({ phone: newPhone }).eq('id', ME.id);
-    ME.phone = newPhone;
-    await reload();
-    toast('Phone number updated!');
+    ME.phone = newPhone; await reload(); toast('Phone updated!');
   }
 
   if (b.id === 'wd-btn') {
-    const amt = Number($('wamt').value)
-    const phone = $('wphone').value.trim()
+    const amt = Number($('wamt').value), phone = $('wphone').value.trim()
     if (!amt || amt < 100) return toast('Minimum withdrawal is KES 100.')
     if (amt > ME.earned) return toast('Amount exceeds available balance.')
     if (!phone || phone.length < 9) return toast('Enter a valid M-Pesa number.')
-
     if (!confirm(`Request withdrawal of ${kes(amt)} to ${phone}?`)) return
     b.textContent = 'Processing...'
-
-    const { error: pErr } = await supabase.from('payments').insert({ 
-      user_id: ME.id, kind: 'Withdrawal', amount: amt, withdraw_status: 'pending', phone: phone, mpesa_ref: 'PENDING', status: 'success'
-    })
-    if (pErr) { b.textContent = 'Request Withdrawal'; return toast('Error: ' + pErr.message) }
-
+    await supabase.from('payments').insert({ user_id: ME.id, kind: 'Withdrawal', amount: amt, withdraw_status: 'pending', phone, mpesa_ref: 'PENDING', status: 'success' })
     await supabase.from('profiles').update({ earned: ME.earned - amt }).eq('id', ME.id)
-    await reload(); toast('Withdrawal requested successfully.')
+    await reload(); toast('Withdrawal requested.')
   }
 
   if (d.un) {
@@ -251,90 +252,24 @@ document.addEventListener('click', async e => {
   if (d.dl) {
     const l = L.find(x => x.id === d.dl)
     if (!l.image_url) return toast('Image not found.')
-    const a = document.createElement('a')
-    a.href = l.image_url
-    a.download = l.title.replace(/[^\w]+/g, '-') + '.jpg'
-    a.target = '_blank'
-    a.click()
-    toast('Downloading...')
-  }
-
-  if (d.up) {
-    const k = d.up, cur = ME.plan && !cyc() ? PLANS[ME.plan].p : 0, amt = PLANS[k].p - cur;
-    
-    if (amt === 0) {
-      if (!confirm(`Activate ${PLANS[k].n} for free?`)) return
-      await supabase.from('payments').insert({ user_id: ME.id, kind: 'Package: ' + PLANS[k].n, amount: 0, status: 'success' })
-      const updates = { plan: k }; if (cyc()) updates.package_start = new Date().toISOString();
-      await supabase.from('profiles').update(updates).eq('id', ME.id)
-      await reload(); toast('Activated!')
-      return
-    }
-
-    if (!confirm(`Pay ${kes(amt)} to buy ${PLANS[k].n}?`)) return
-
-    const handler = PaystackPop.setup({
-      key: 'pk_live_e18c9f284f42b39a3f6550d8d0c6c91df3f3510d', // 👈 PASTE YOUR PUBLIC KEY HERE
-      email: ME.email || 'customer@earnhub.com',
-      amount: amt * 100, 
-      currency: 'KES',
-      metadata: {
-        custom_fields: [
-          { display_name: "User ID", variable_name: "user_id", value: ME.id },
-          { display_name: "Package", variable_name: "package_name", value: PLANS[k].n }
-        ]
-      },
-      onSuccess: async function(response) {
-        toast('Payment successful! Activating...')
-        await supabase.from('payments').insert({ 
-          user_id: ME.id, kind: 'Package: ' + PLANS[k].n, amount: amt, mpesa_ref: response.reference, status: 'success' 
-        })
-        const updates = { plan: k }; 
-        if (cyc()) updates.package_start = new Date().toISOString();
-        await supabase.from('profiles').update(updates).eq('id', ME.id)
-        await reload(); 
-      },
-      onCancel: function() { toast('Payment window closed.') }
-    });
-    
-    handler.openIframe();
+    const a = document.createElement('a'); a.href = l.image_url; a.download = 'ad.jpg'; a.target = '_blank'; a.click()
   }
 
   if (b.id === 'go') {
     const v = Math.floor(+$('vw').value), r = left(), l = L.find(x => x.id === $('sl').value)
     if (!(v > 0)) return toast('Enter views.'); if (!shotDataUrl) return toast('Upload screenshot.')
     if (r < PR) return toast('Daily limit reached.')
-    
     const ok = Math.min(v, r === Infinity ? v : Math.floor(r / PR));
-    
     b.textContent = 'Uploading...';
-    
     try {
-      const blob = dataUrlToBlob(shotDataUrl);
-      const fileName = `${ME.id}/${Date.now()}.jpg`; 
-      
+      const blob = dataUrlToBlob(shotDataUrl), fileName = `${ME.id}/${Date.now()}.jpg`; 
       const { data: up, error: upErr } = await supabase.storage.from(BUCKET).upload(fileName, blob, { contentType: 'image/jpeg' });
       if (upErr) throw upErr;
-      
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const { data: signed, error: signErr } = await supabase.storage.from(BUCKET).createSignedUrl(up.path, 60 * 60 * 24 * 7);
-      if (signErr) throw signErr;
-
-      const { error: subErr } = await supabase.from('submissions').insert({ 
-        user_id: ME.id, listing_id: l.id, ad: l.title, views: ok, amount: ok * PR, screenshot: signed.signedUrl, status: 'pending' 
-      });
-      
-      if (subErr) throw subErr;
-
-      shotDataUrl = null; 
-      await reload(); 
-      toast('Submitted for review!')
-      
-    } catch (err) {
-      alert("Upload failed: " + err.message);
-      b.textContent = 'Submit';
-    }
+      const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrl(up.path, 60 * 60 * 24 * 7);
+      await supabase.from('submissions').insert({ user_id: ME.id, listing_id: l.id, ad: l.title, views: ok, amount: ok * PR, screenshot: signed.signedUrl, status: 'pending' })
+      shotDataUrl = null; await reload(); toast('Submitted for review!')
+    } catch (err) { alert("Upload failed: " + err.message); b.textContent = 'Submit'; }
   }
 })
 
@@ -355,42 +290,25 @@ function dataUrlToBlob(dataUrl) {
   for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); return new Blob([arr], { type: mime })
 }
 
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  await supabase.auth.signOut()
-  location.href = 'index.html'
-})
+document.getElementById('logoutBtn').addEventListener('click', async () => { await supabase.auth.signOut(); location.href = 'index.html' })
 
 let idleTimer;
 function resetIdleTimer() {
   clearTimeout(idleTimer);
   idleTimer = setTimeout(async () => {
-    alert("Your session has expired due to 15 minutes of inactivity. Please log in again.");
-    await supabase.auth.signOut();
-    location.href = 'index.html';
+    alert("Your session has expired due to 15 minutes of inactivity.");
+    await supabase.auth.signOut(); location.href = 'index.html';
   }, 15 * 60 * 1000);
 }
-window.addEventListener('mousemove', resetIdleTimer);
-window.addEventListener('keydown', resetIdleTimer);
-window.addEventListener('click', resetIdleTimer);
-window.addEventListener('scroll', resetIdleTimer);
+['mousemove','keydown','click','scroll'].forEach(ev => window.addEventListener(ev, resetIdleTimer));
 resetIdleTimer();
 
 ;(async () => {
   try {
     const { profile, user } = await requireAuth()
-    
-    if (profile.status === 'suspended') {
-      alert("Your account has been suspended by the Admin. Please contact support.");
-      await supabase.auth.signOut();
-      location.href = 'index.html';
-      return;
-    }
-    
-    ME.id = profile.id; 
-    ME.name = profile.name;
-    ME.email = user.email;
-    ME.phone = profile.phone;
-    ME.plan = profile.plan; ME.is_admin = profile.is_admin; ME.package_start = profile.package_start; ME.referral_bonus = profile.referral_bonus; ME.earned = profile.earned;
+    if (profile.status === 'suspended') { alert("Account suspended."); await supabase.auth.signOut(); location.href = 'index.html'; return; }
+    ME.id = profile.id; ME.name = profile.name; ME.email = user.email; ME.phone = profile.phone;
+    ME.plan = profile.plan; ME.package_status = profile.package_status; ME.is_admin = profile.is_admin; ME.package_start = profile.package_start; ME.referral_bonus = profile.referral_bonus; ME.earned = profile.earned;
     await loadAll(); render()
   } catch (err) { console.error(err); }
 })()
