@@ -210,11 +210,29 @@ document.addEventListener('click', async e => {
           { display_name: "Package", variable_name: "package_name", value: PLANS[k].n }
         ]
       },
-      onSuccess: async function(response) {
-        toast('Payment successful! Waiting for Admin approval...')
-        await supabase.from('payments').insert({ user_id: ME.id, kind: 'Package: ' + PLANS[k].n, amount: amt, mpesa_ref: response.reference, status: 'success', withdraw_status: 'pending' })
-        await supabase.from('profiles').update({ plan: k, package_status: 'pending' }).eq('id', ME.id)
+          onSuccess: async function(response) {
+        toast('Payment successful! Activating your package...')
+        
+        // 1. Save the payment
+        await supabase.from('payments').insert({ 
+          user_id: ME.id, 
+          kind: 'Package: ' + PLANS[k].n, 
+          amount: amt, 
+          mpesa_ref: response.reference, 
+          status: 'success', 
+          withdraw_status: 'completed' // Mark as completed
+        })
+        
+        // 2. Automatically activate the package
+        await supabase.from('profiles').update({ 
+          plan: k, 
+          package_status: 'active',
+          package_start: new Date().toISOString()
+        }).eq('id', ME.id)
+        
+        // 3. Reload the screen instantly
         await reload(); 
+        toast('Package activated successfully!');
       },
       onCancel: function() { toast('Payment window closed.') }
     });
