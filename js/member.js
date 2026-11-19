@@ -41,7 +41,7 @@ function banner() {
 }
 
 function render() {
-  const cap = ME.plan ? PLANS[ME.plan].cap : 0;
+    const cap = (ME.plan && PLANS[ME.plan]) ? PLANS[ME.plan].cap : 0;
   const t = today();
   const v = subs.filter(s => s.status === 'approved').reduce((a,s)=>a+Number(s.views),0);
 
@@ -51,7 +51,7 @@ function render() {
 
   $('kpis').innerHTML = [
     ['Earned today', kes(t)],
-    ['Daily limit', ME.plan && active() ? (cap === Infinity ? 'No limit' : kes(cap)) : '—'],
+        ['Daily limit', (ME.plan && PLANS[ME.plan] && active()) ? (cap === Infinity ? 'No limit' : kes(cap)) : '—'],
     ['Working days left', active() ? PLANS[ME.plan].d - used() : 0],
     ['Total earned', kes(ME.earned || 0)],
     ['Total views', v.toLocaleString()]
