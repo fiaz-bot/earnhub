@@ -41,17 +41,18 @@ function banner() {
 }
 
 function render() {
-    const cap = (ME.plan && PLANS[ME.plan]) ? PLANS[ME.plan].cap : 0;
+  // SAFE CHECK: Prevents crash if plan is outdated
+  const cap = (ME.plan && PLANS[ME.plan]) ? PLANS[ME.plan].cap : 0;
   const t = today();
   const v = subs.filter(s => s.status === 'approved').reduce((a,s)=>a+Number(s.views),0);
 
   $('uname').textContent = ME.name || 'User';
-  $('pb').textContent = ME.plan ? PLANS[ME.plan].n : 'No package';
+  $('pb').textContent = (ME.plan && PLANS[ME.plan]) ? PLANS[ME.plan].n : 'No package';
   $('ban').innerHTML = banner();
 
   $('kpis').innerHTML = [
     ['Earned today', kes(t)],
-        ['Daily limit', (ME.plan && PLANS[ME.plan] && active()) ? (cap === Infinity ? 'No limit' : kes(cap)) : '—'],
+    ['Daily limit', (ME.plan && PLANS[ME.plan] && active()) ? (cap === Infinity ? 'No limit' : kes(cap)) : '—'],
     ['Working days left', active() ? PLANS[ME.plan].d - used() : 0],
     ['Total earned', kes(ME.earned || 0)],
     ['Total views', v.toLocaleString()]
