@@ -4,7 +4,7 @@ import { requireAuth } from './auth.js'
 
 const PR = 20, FEE = 50;
 const PLANS = {
-  bronze: { p: 300,  cap: 500,      d: 3, n: 'Bronze'  }, // KES 1 for testing
+  bronze: { p: 1,    cap: 500,      d: 3, n: 'Bronze'  },
   silver: { p: 500,  cap: 1000,     d: 5, n: 'Silver' },
   gold:   { p: 1000, cap: Infinity, d: 7, n: 'Gold'   }
 };
@@ -193,7 +193,7 @@ document.addEventListener('click', async e => {
   if (d.t) { tab = d.t; shotDataUrl = null; $('main').innerHTML = ''; render(); }
   if (d.copy) { navigator.clipboard.writeText($('rl').value); toast('Copied.') }
 
-  // PAYSTACK WITH FRONTEND VERIFICATION
+  // PAYSTACK POPUP
   if (d.req) {
     const k = d.req, amt = PLANS[k].p;
     if (!confirm(`Pay ${kes(amt)} for ${PLANS[k].n} package?`)) return;
@@ -210,39 +210,15 @@ document.addEventListener('click', async e => {
         ]
       },
       onSuccess: async function(response) {
-        toast('Verifying payment...');
+        // Save to database as PENDING
+        await supabase.from('payments').insert({ 
+          user_id: ME.id, kind: 'Package: ' + PLANS[k].n, amount: amt, 
+          mpesa_ref: response.reference, status: 'success', withdraw_status: 'pending' 
+        })
+        await supabase.from('profiles').update({ plan: k, package_status: 'pending' }).eq('id', ME.id)
         
-        try {
-          // Verify directly with Paystack using Secret Key
-          const paystackRes = await fetch(`https://api.paystack.co/transaction/verify/${response.reference}`, {
-            headers: {
-              Authorization: `Bearer YOUR_PAYSTACK_SECRET_KEY` // 👈 PASTE YOUR SECRET KEY HERE
-            }
-          });
-          const paystackData = await paystackRes.json();
-
-          if (paystackData.status && paystackData.data.status === 'success' && paystackData.data.amount === (amt * 100)) {
-            
-            await supabase.from('payments').insert({ 
-              user_id: ME.id, kind: 'Package: ' + PLANS[k].n, amount: amt, 
-              mpesa_ref: response.reference, status: 'success', withdraw_status: 'completed'
-            })
-            
-            await supabase.from('profiles').update({ 
-              plan: k, 
-              package_status: 'active',
-              package_start: new Date().toISOString()
-            }).eq('id', ME.id)
-
-            await reload(); 
-            toast('Package activated successfully!');
-          } else {
-            toast('Payment verification failed. Contact support.');
-          }
-        } catch (err) {
-          console.error(err);
-          toast('Error verifying payment.');
-        }
+        await reload(); 
+        toast('Payment successful! Admin will approve shortly.');
       },
       onCancel: function() { toast('Payment window closed.') }
     });
