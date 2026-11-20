@@ -4,7 +4,7 @@ import { requireAuth } from './auth.js'
 
 const PR = 20, FEE = 50;
 const PLANS = {
-  bronze: { p: 1,    cap: 500,      d: 3, n: 'Bronze'  },
+  bronze: { p: 300,    cap: 500,      d: 3, n: 'Bronze'  },
   silver: { p: 500,  cap: 1000,     d: 5, n: 'Silver' },
   gold:   { p: 1000, cap: Infinity, d: 7, n: 'Gold'   }
 };
