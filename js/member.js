@@ -4,7 +4,7 @@ import { requireAuth } from './auth.js'
 
 const PR = 20, FEE = 50;
 const PLANS = {
-  bronze: { p: 1,  cap: 500,      d: 3, n: 'Bronze'  },
+  bronze: { p: 1,  cap: 500,      d: 3, n: 'Bronze'  }, // KES 1 for testing
   silver: { p: 500,  cap: 1000,     d: 5, n: 'Silver' },
   gold:   { p: 1000, cap: Infinity, d: 7, n: 'Gold'   }
 };
@@ -41,7 +41,6 @@ function banner() {
 }
 
 function render() {
-  // SAFE CHECK: Prevents crash if plan is outdated
   const cap = (ME.plan && PLANS[ME.plan]) ? PLANS[ME.plan].cap : 0;
   const t = today();
   const v = subs.filter(s => s.status === 'approved').reduce((a,s)=>a+Number(s.views),0);
@@ -194,7 +193,7 @@ document.addEventListener('click', async e => {
   if (d.t) { tab = d.t; shotDataUrl = null; $('main').innerHTML = ''; render(); }
   if (d.copy) { navigator.clipboard.writeText($('rl').value); toast('Copied.') }
 
-  // PAYSTACK INTEGRATION FOR PACKAGE REQUEST
+  // PAYSTACK WITH FRONTEND VERIFICATION
   if (d.req) {
     const k = d.req, amt = PLANS[k].p;
     if (!confirm(`Pay ${kes(amt)} for ${PLANS[k].n} package?`)) return;
@@ -210,11 +209,11 @@ document.addEventListener('click', async e => {
           { display_name: "Package", variable_name: "package_name", value: PLANS[k].n }
         ]
       },
-              onSuccess: async function(response) {
+      onSuccess: async function(response) {
         toast('Verifying payment...');
         
         try {
-          // 1. Verify the transaction with Paystack using your test secret key
+          // Verify directly with Paystack using Secret Key
           const paystackRes = await fetch(`https://api.paystack.co/transaction/verify/${response.reference}`, {
             headers: {
               Authorization: `Bearer YOUR_PAYSTACK_SECRET_KEY` // 👈 PASTE YOUR SECRET KEY HERE
@@ -222,16 +221,13 @@ document.addEventListener('click', async e => {
           });
           const paystackData = await paystackRes.json();
 
-          // 2. If Paystack confirms it's successful and the amount matches
           if (paystackData.status && paystackData.data.status === 'success' && paystackData.data.amount === (amt * 100)) {
             
-            // Save the payment
             await supabase.from('payments').insert({ 
               user_id: ME.id, kind: 'Package: ' + PLANS[k].n, amount: amt, 
               mpesa_ref: response.reference, status: 'success', withdraw_status: 'completed'
             })
             
-            // Activate the package automatically
             await supabase.from('profiles').update({ 
               plan: k, 
               package_status: 'active',
@@ -248,6 +244,10 @@ document.addEventListener('click', async e => {
           toast('Error verifying payment.');
         }
       },
+      onCancel: function() { toast('Payment window closed.') }
+    });
+    handler.openIframe();
+  }
 
   if (b.id === 'save-phone-btn') {
     const newPhone = $('set-phone').value.trim();
